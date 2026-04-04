@@ -1,5 +1,9 @@
-// Supabase config — ganti dengan project URL dan anon key kamu
-// Dapatkan dari: https://supabase.com/dashboard → Project Settings → API
+// Guard: jangan jalankan dua kali
+if (typeof window.__authLoaded !== 'undefined') {
+  // sudah load, skip
+} else {
+window.__authLoaded = true;
+
 const SUPABASE_URL = 'https://qjhjcpbftdrwsabzpwec.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqaGpjcGJmdGRyd3NhYnpwd2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTM0NDAsImV4cCI6MjA5MDg4OTQ0MH0.9twMdlMz17ql3Zfq8M8fcj1YEwZKLlYOcijFNFEwI7A';
 
@@ -180,3 +184,5 @@ async function renderAuthNav(container) {
   });
   document.addEventListener('click', () => menu.classList.remove('open'));
 }
+
+} // end __authLoaded guard
