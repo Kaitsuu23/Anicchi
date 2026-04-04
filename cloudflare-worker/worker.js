@@ -92,7 +92,7 @@ export default {
       );
       if (!isAllowed) return jsonError(`Host ${parsed.hostname} tidak diizinkan.`, 403);
 
-      const method = request.method === 'POST' ? 'POST' : 'GET';
+      const method = request.method === 'POST' ? 'POST' : request.method === 'HEAD' ? 'HEAD' : 'GET';
       const body = (method === 'POST') ? await request.text() : undefined;
       const contentType = request.headers.get('content-type') || 'application/x-www-form-urlencoded';
 
