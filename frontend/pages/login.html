@@ -11,18 +11,19 @@
   <link rel="manifest" href="/icon/site.webmanifest" />
   <link rel="stylesheet" href="/css/style.css" />
   <style>
+    body, html { overflow: hidden; height: 100%; }
+    main { padding: 0; overflow: hidden; }
     .auth-page {
       height: calc(100vh - 80px);
       display: flex; align-items: center; justify-content: center;
       padding: 1rem;
-      overflow: hidden;
     }
     .auth-card {
       width: 100%; max-width: 400px;
       background: var(--glass);
       border: 1px solid var(--glass-border);
       border-radius: 20px;
-      padding: 1.75rem 1.75rem;
+      padding: 1.75rem;
       backdrop-filter: blur(24px) saturate(150%);
       -webkit-backdrop-filter: blur(24px) saturate(150%);
       box-shadow: var(--shadow);
