@@ -25,7 +25,8 @@ app.use('/api', scraperRoutes);
 const pages = [
   'series', 'uncensored', 'hentai-list', 'threed', '3d',
   'genres', 'genre', 'monthly', 'recent-series',
-  'recent-episodes', 'search', 'letter'
+  'recent-episodes', 'search', 'letter',
+  'login', 'register'
 ];
 
 // Letter filter route

@@ -37,6 +37,7 @@ document.addEventListener('DOMContentLoaded', () => {
         <input name="q" class="nav-search-input" placeholder="Search..." autocomplete="off" value="${searchVal}" />
         <button type="submit" class="nav-search-btn"><svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="11" cy="11" r="8"></circle><line x1="21" y1="21" x2="16.65" y2="16.65"></line></svg></button>
       </form>
+      <div id="nav-auth-slot" class="nav-links-right"></div>
     </div>
   `;
 
@@ -48,6 +49,17 @@ document.addEventListener('DOMContentLoaded', () => {
     menu.classList.toggle('open');
   });
   document.addEventListener('click', () => menu.classList.remove('open'));
+
+  // Render auth state jika auth.js tersedia
+  const authSlot = document.getElementById('nav-auth-slot');
+  if (authSlot && typeof renderAuthNav === 'function') {
+    renderAuthNav(authSlot);
+  } else if (authSlot) {
+    // auth.js belum load, tunggu sebentar
+    setTimeout(() => {
+      if (typeof renderAuthNav === 'function') renderAuthNav(authSlot);
+    }, 100);
+  }
 });
 
 async function loadGenresMenu(menu) {

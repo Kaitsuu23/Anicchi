@@ -2,6 +2,7 @@
   "name": "ecchizone",
   "version": "1.0.0",
   "dependencies": {
+    "@supabase/supabase-js": "^2.101.1",
     "axios": "latest",
     "cheerio": "latest"
   }
