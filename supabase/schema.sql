@@ -44,6 +44,8 @@ CREATE TABLE IF NOT EXISTS user_watch_history (
   video_slug      VARCHAR(255) NOT NULL,
   video_title     VARCHAR(500),
   video_cover_url TEXT,
+  series_slug     VARCHAR(255),
+  series_title    VARCHAR(500),
   watch_progress  INTEGER DEFAULT 0,
   last_watched    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
   UNIQUE(user_id, video_slug)

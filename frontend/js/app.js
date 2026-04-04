@@ -105,13 +105,68 @@ async function loadHome() {
     </div>`).join('');
 
   try {
-    const res = await fetch(`${API}/home`);
-    const json = await res.json();
+    const [homeRes] = await Promise.all([fetch(`${API}/home`)]);
+    const json = await homeRes.json();
     if (!json.success) throw new Error(json.message);
+
+    // Cek login untuk Continue Watching
+    const token = localStorage.getItem('ez_token');
+    if (token) {
+      try {
+        const histRes = await fetch(`${API}/auth?action=history&limit=8`, {
+          headers: { Authorization: `Bearer ${token}` }
+        });
+        const histJson = await histRes.json();
+        if (histJson.success && histJson.data.length > 0) {
+          const continueSection = renderContinueWatching(histJson.data);
+          main.innerHTML = continueSection;
+          renderSections(json.data);
+          return;
+        }
+      } catch { /* silent */ }
+    }
+
     renderSections(json.data);
   } catch (err) {
     main.innerHTML = `<div class="error-msg"><span>⚠️</span>${err.message}</div>`;
   }
+}
+
+function renderContinueWatching(items) {
+  const cards = items.map(item => {
+    const progress = item.watch_progress || 0;
+    const href = `/episodes/${item.video_slug}/`;
+    const cover = item.video_cover_url || 'https://placehold.co/200x280/0a0a0f/444?text=N/A';
+    const progressBar = `
+      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.1)">
+        <div style="height:100%;background:var(--accent);width:${Math.min(100, (progress / 1500) * 100)}%;border-radius:2px"></div>
+      </div>`;
+    return `
+      <a class="card" href="${href}" title="${item.video_title || ''}">
+        <div class="card-poster" style="position:relative">
+          <img class="card-thumb" src="${cover}" alt="${item.video_title || ''}" loading="lazy"
+            onerror="this.src='https://placehold.co/200x280/0a0a0f/444?text=N/A'" />
+          <div class="card-series-overlay">${item.series_title || item.video_title || ''}</div>
+          ${progressBar}
+        </div>
+        <div class="card-body">
+          <div class="card-title">${item.video_title || ''}</div>
+          ${progress > 0 ? `<div class="card-date">⏱ ${Math.floor(progress/60)}m ${progress%60}s</div>` : ''}
+        </div>
+      </a>`;
+  }).join('');
+
+  return `
+    <div class="section-block">
+      <div class="section-header">
+        <h2 class="section-title">Continue Watching</h2>
+        <div class="section-actions">
+          <button class="arrow-btn" onclick="scrollSection(this, -1)">‹</button>
+          <button class="arrow-btn" onclick="scrollSection(this, 1)">›</button>
+        </div>
+      </div>
+      <div class="grid">${cards}</div>
+    </div>`;
 }
 
 loadHome();

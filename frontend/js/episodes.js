@@ -188,6 +188,33 @@ async function loadEpisode() {
     setTimeout(initPlayer, 50);
     loadSidebar();
 
+    // ── Watch History ─────────────────────────────────────────
+    const seriesSlug = d.seriesLink ? urlToSlug(d.seriesLink) : null;
+    saveWatchHistory({
+      video_slug: epSlug,
+      video_title: d.title,
+      video_cover_url: d.seriesCover || d.thumbnail || null,
+      series_slug: seriesSlug,
+      series_title: d.seriesTitle || d.title,
+      watch_progress: 0,
+    });
+    // Update progress setiap 15 detik saat nonton
+    let _historyTimer = null;
+    document.addEventListener('timeupdate', () => {}, true);
+    const _progressInterval = setInterval(() => {
+      const v = document.getElementById('ep-video');
+      if (!v || !v.duration) return;
+      const progress = Math.floor(v.currentTime);
+      saveWatchHistory({
+        video_slug: epSlug,
+        video_title: d.title,
+        video_cover_url: d.seriesCover || d.thumbnail || null,
+        series_slug: seriesSlug,
+        series_title: d.seriesTitle || d.title,
+        watch_progress: progress,
+      });
+    }, 15000);
+
     // Panggil AJAX dari browser hanya jika server-side scraper tidak dapat playerSrcs
     if (!d.playerSrcs || d.playerSrcs.length === 0) {
       if (d.postId) {
@@ -538,4 +565,17 @@ function renderPlayer(srcs) {
   ).join('');
 
   setTimeout(initPlayer, 50);
+}
+
+// ── Watch History helper ──────────────────────────────────────
+async function saveWatchHistory(data) {
+  const token = localStorage.getItem('ez_token');
+  if (!token) return; // tidak login, skip
+  try {
+    await fetch('/api/auth?action=history', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+      body: JSON.stringify(data),
+    });
+  } catch { /* silent fail */ }
 }

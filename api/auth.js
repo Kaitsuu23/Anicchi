@@ -5,32 +5,76 @@ const { getDB } = require('../lib/db');
 
 const JWT_SECRET = process.env.JWT_SECRET;
 
+function verifyToken(req) {
+  const auth = req.headers.authorization;
+  if (!auth?.startsWith('Bearer ')) return null;
+  try { return jwt.verify(auth.slice(7), JWT_SECRET); }
+  catch { return null; }
+}
+
 module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
-  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, OPTIONS');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, POST, DELETE, OPTIONS');
   res.setHeader('Access-Control-Allow-Headers', 'Content-Type, Authorization');
   if (req.method === 'OPTIONS') return res.status(200).end();
 
-  // Route berdasarkan query: /api/auth?action=register|login|me
   const action = req.query.action;
+  const db = getDB();
 
-  // ── ME ──────────────────────────────────────────────────────
+  // ── ME ───────────────────────────────────────────────────────
   if (action === 'me') {
-    const auth = req.headers.authorization;
-    if (!auth?.startsWith('Bearer '))
-      return res.status(401).json({ success: false, message: 'Unauthorized' });
-    try {
-      const payload = jwt.verify(auth.slice(7), JWT_SECRET);
-      return res.json({ success: true, user: payload });
-    } catch {
-      return res.status(401).json({ success: false, message: 'Token tidak valid atau expired.' });
-    }
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    return res.json({ success: true, user });
+  }
+
+  // ── HISTORY GET ──────────────────────────────────────────────
+  if (action === 'history' && req.method === 'GET') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const limit = parseInt(req.query.limit) || 12;
+    const { data, error } = await db
+      .from('user_watch_history')
+      .select('*')
+      .eq('user_id', user.id)
+      .order('last_watched', { ascending: false })
+      .limit(limit);
+    if (error) return res.status(500).json({ success: false, message: error.message });
+    return res.json({ success: true, data: data || [] });
+  }
+
+  // ── HISTORY SAVE ─────────────────────────────────────────────
+  if (action === 'history' && req.method === 'POST') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { video_slug, video_title, video_cover_url, series_slug, series_title, watch_progress } = req.body || {};
+    if (!video_slug) return res.status(400).json({ success: false, message: 'video_slug required' });
+    const { error } = await db.from('user_watch_history').upsert({
+      user_id: user.id,
+      video_slug,
+      video_title: video_title || null,
+      video_cover_url: video_cover_url || null,
+      series_slug: series_slug || null,
+      series_title: series_title || null,
+      watch_progress: watch_progress || 0,
+      last_watched: new Date().toISOString(),
+    }, { onConflict: 'user_id,video_slug' });
+    if (error) return res.status(500).json({ success: false, message: error.message });
+    return res.json({ success: true });
+  }
+
+  // ── HISTORY DELETE ───────────────────────────────────────────
+  if (action === 'history' && req.method === 'DELETE') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { video_slug } = req.body || {};
+    if (!video_slug) return res.status(400).json({ success: false, message: 'video_slug required' });
+    await db.from('user_watch_history').delete().eq('user_id', user.id).eq('video_slug', video_slug);
+    return res.json({ success: true });
   }
 
   if (req.method !== 'POST')
     return res.status(405).json({ success: false, message: 'Method not allowed' });
-
-  const db = getDB();
 
   // ── REGISTER ─────────────────────────────────────────────────
   if (action === 'register') {

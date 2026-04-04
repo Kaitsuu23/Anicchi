@@ -2,7 +2,8 @@
   "functions": {
     "api/detail.js": { "maxDuration": 30 },
     "api/episode.js": { "maxDuration": 30 },
-    "api/video.js": { "maxDuration": 60 }
+    "api/video.js": { "maxDuration": 60 },
+    "api/auth.js": { "maxDuration": 15 }
   },
   "rewrites": [
     { "source": "/api/studios-years", "destination": "/api/genres?studios=1" },
