@@ -50,6 +50,8 @@
     { "source": "/login", "destination": "/frontend/pages/login.html" },
     { "source": "/register/", "destination": "/frontend/pages/register.html" },
     { "source": "/register", "destination": "/frontend/pages/register.html" },
+    { "source": "/history/", "destination": "/frontend/pages/history.html" },
+    { "source": "/history", "destination": "/frontend/pages/history.html" },
     { "source": "/css/:path*", "destination": "/frontend/css/:path*" },
     { "source": "/js/:path*", "destination": "/frontend/js/:path*" },
     { "source": "/icon/:path*", "destination": "/frontend/icon/:path*" },
