@@ -49,8 +49,12 @@ async function handleLogin(e) {
     }
 
     setToken(json.token);
-    const redirect = new URLSearchParams(location.search).get('redirect') || '/';
-    location.href = redirect;
+    const okEl = document.getElementById('auth-success');
+    if (okEl) showMsg(okEl, 'Login berhasil! Mengalihkan...');
+    setTimeout(() => {
+      const redirect = new URLSearchParams(location.search).get('redirect') || '/';
+      location.href = redirect;
+    }, 800);
   } catch {
     showMsg(errEl, 'Gagal terhubung ke server.');
     setLoading(btn, false);
