@@ -1,23 +1,16 @@
-// Guard: jangan jalankan dua kali
-if (typeof window.__authLoaded !== 'undefined') {
-  // sudah load, skip
-} else {
+if (window.__authLoaded) throw new Error('auth.js already loaded');
 window.__authLoaded = true;
 
 const SUPABASE_URL = 'https://qjhjcpbftdrwsabzpwec.supabase.co';
 const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqaGpjcGJmdGRyd3NhYnpwd2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTM0NDAsImV4cCI6MjA5MDg4OTQ0MH0.9twMdlMz17ql3Zfq8M8fcj1YEwZKLlYOcijFNFEwI7A';
 
-// Load Supabase via CDN (dipanggil dari HTML)
-let supabase = null;
-
+let _sb = null;
 function initSupabase() {
-  if (window.supabase && !supabase) {
-    supabase = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  if (!_sb && window.supabase) {
+    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
   }
-  return supabase;
+  return _sb;
 }
-
-// ─── Auth helpers ───────────────────────────────────────────────
 
 async function getSession() {
   const sb = initSupabase();
@@ -42,24 +35,23 @@ async function signOut() {
 async function handleLogin(e) {
   e.preventDefault();
   const form = e.target;
-  const email = form.email.value.trim();
-  const password = form.password.value;
   const btn = form.querySelector('.auth-btn');
   const errEl = document.getElementById('auth-error');
 
   setLoading(btn, true);
-  clearError(errEl);
+  clearMsg(errEl);
 
-  const sb = initSupabase();
-  const { error } = await sb.auth.signInWithPassword({ email, password });
+  const { error } = await initSupabase().auth.signInWithPassword({
+    email: form.email.value.trim(),
+    password: form.password.value,
+  });
 
   if (error) {
-    showError(errEl, friendlyError(error.message));
+    showMsg(errEl, friendlyError(error.message), 'error');
     setLoading(btn, false);
     return;
   }
 
-  // Redirect ke halaman sebelumnya atau home
   const redirect = new URLSearchParams(location.search).get('redirect') || '/';
   location.href = redirect;
 }
@@ -69,43 +61,31 @@ async function handleLogin(e) {
 async function handleRegister(e) {
   e.preventDefault();
   const form = e.target;
-  const email = form.email.value.trim();
-  const password = form.password.value;
-  const confirm = form.confirm.value;
-  const username = form.username.value.trim();
   const btn = form.querySelector('.auth-btn');
   const errEl = document.getElementById('auth-error');
-  const successEl = document.getElementById('auth-success');
+  const okEl = document.getElementById('auth-success');
+  const password = form.password.value;
+  const confirm = form.confirm.value;
 
-  clearError(errEl);
-  clearError(successEl);
+  clearMsg(errEl);
+  clearMsg(okEl);
 
-  if (password !== confirm) {
-    showError(errEl, 'Password tidak cocok.');
-    return;
-  }
-  if (password.length < 6) {
-    showError(errEl, 'Password minimal 6 karakter.');
-    return;
-  }
+  if (password !== confirm) return showMsg(errEl, 'Password tidak cocok.', 'error');
+  if (password.length < 6) return showMsg(errEl, 'Password minimal 6 karakter.', 'error');
 
   setLoading(btn, true);
 
-  const sb = initSupabase();
-  const { error } = await sb.auth.signUp({
-    email,
+  const { error } = await initSupabase().auth.signUp({
+    email: form.email.value.trim(),
     password,
-    options: { data: { username } }
+    options: { data: { username: form.username.value.trim() } },
   });
 
-  if (error) {
-    showError(errEl, friendlyError(error.message));
-    setLoading(btn, false);
-    return;
-  }
-
   setLoading(btn, false);
-  showSuccess(successEl, 'Registrasi berhasil! Cek email kamu untuk konfirmasi akun.');
+
+  if (error) return showMsg(errEl, friendlyError(error.message), 'error');
+
+  showMsg(okEl, 'Registrasi berhasil! Cek email kamu untuk konfirmasi akun.', 'success');
   form.reset();
 }
 
@@ -116,22 +96,16 @@ function setLoading(btn, loading) {
   btn.textContent = loading ? 'Loading...' : btn.dataset.label;
 }
 
-function showError(el, msg) {
+function showMsg(el, msg, type) {
   if (!el) return;
   el.textContent = msg;
   el.style.display = 'block';
 }
 
-function clearError(el) {
+function clearMsg(el) {
   if (!el) return;
   el.textContent = '';
   el.style.display = 'none';
-}
-
-function showSuccess(el, msg) {
-  if (!el) return;
-  el.textContent = msg;
-  el.style.display = 'block';
 }
 
 function friendlyError(msg) {
@@ -143,16 +117,7 @@ function friendlyError(msg) {
   return msg;
 }
 
-// ─── Auto-render auth di navbar saat script ini load ────────
-window.__renderAuthNavWhenReady = function () {
-  const slot = document.getElementById('nav-auth-slot');
-  if (slot) renderAuthNav(slot);
-};
-
-// Kalau navbar sudah siap duluan, langsung render
-if (window.__navAuthSlotReady) {
-  window.__renderAuthNavWhenReady();
-}
+// ─── Navbar auth slot ────────────────────────────────────────────
 
 async function renderAuthNav(container) {
   const user = await getUser();
@@ -160,8 +125,6 @@ async function renderAuthNav(container) {
     container.innerHTML = `<a href="/login" class="nav-link">Login</a>`;
     return;
   }
-
-  // Ambil dari public.users
   const sb = initSupabase();
   const { data: profile } = await sb.from('users').select('username').eq('id', user.id).single();
   const username = profile?.username || user.email.split('@')[0];
@@ -178,11 +141,14 @@ async function renderAuthNav(container) {
   `;
   const toggle = container.querySelector('.dropdown-toggle');
   const menu = container.querySelector('#user-menu');
-  toggle.addEventListener('click', e => {
-    e.stopPropagation();
-    menu.classList.toggle('open');
-  });
+  toggle.addEventListener('click', e => { e.stopPropagation(); menu.classList.toggle('open'); });
   document.addEventListener('click', () => menu.classList.remove('open'));
 }
 
-} // end __authLoaded guard
+// Dipanggil oleh navbar.js setelah slot siap
+window.__renderAuthNavWhenReady = function () {
+  const slot = document.getElementById('nav-auth-slot');
+  if (slot) renderAuthNav(slot);
+};
+
+if (window.__navAuthSlotReady) window.__renderAuthNavWhenReady();

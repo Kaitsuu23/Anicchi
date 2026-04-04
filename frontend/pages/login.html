@@ -107,7 +107,7 @@
 
         <div id="auth-error" class="auth-error"></div>
 
-        <form class="auth-form" id="login-form">
+        <form class="auth-form" id="login-form" onsubmit="return false">
           <div class="form-group">
             <label class="form-label" for="email">Email</label>
             <input class="form-input" type="email" id="email" name="email"
@@ -132,11 +132,11 @@
   <script src="/js/auth.js"></script>
   <script src="/js/navbar.js"></script>
   <script>
-    document.addEventListener('DOMContentLoaded', async () => {
+    (async () => {
       const user = await getUser();
       if (user) location.href = '/';
-      document.getElementById('login-form').addEventListener('submit', handleLogin);
-    });
+    })();
+    document.getElementById('login-form').addEventListener('submit', handleLogin);
   </script>
 </body>
 </html>
