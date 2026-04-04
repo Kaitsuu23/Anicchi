@@ -7,7 +7,7 @@ async function getUser() {
   const token = getToken();
   if (!token) return null;
   try {
-    const res = await fetch('/api/auth/me', {
+    const res = await fetch('/api/auth?action=me', {
       headers: { Authorization: `Bearer ${token}` }
     });
     if (!res.ok) { removeToken(); return null; }
@@ -32,7 +32,7 @@ async function handleLogin(e) {
   clearMsg(errEl);
 
   try {
-    const res = await fetch('/api/auth/login', {
+    const res = await fetch('/api/auth?action=login', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
@@ -76,7 +76,7 @@ async function handleRegister(e) {
   setLoading(btn, true);
 
   try {
-    const res = await fetch('/api/auth/register', {
+    const res = await fetch('/api/auth?action=register', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({

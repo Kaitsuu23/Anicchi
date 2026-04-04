@@ -1,3 +1,6 @@
+const { scrapeStudiosAndYears } = require('../lib/scraper');
+const { getCache, setCache } = require('../lib/cache');
+
 const GENRES = [
   { name: '3D', slug: '3d' }, { name: 'Action', slug: 'action' }, { name: 'Adventure', slug: 'adventure' },
   { name: 'Ahegao', slug: 'ahegao' }, { name: 'Anal', slug: 'anal' }, { name: 'Animal Girls', slug: 'animal-ears' },
@@ -27,8 +30,21 @@ for (let y = 2026; y >= 2000; y--) {
   YEARS.push({ name: y.toString(), url: `https://hentaimama.io/release/${y}/` });
 }
 
-module.exports = (req, res) => {
+module.exports = async (req, res) => {
   res.setHeader('Access-Control-Allow-Origin', '*');
+
+  // /api/genres?studios=1 → return studios & years (menggantikan api/studios-years)
+  if (req.query.studios) {
+    try {
+      const key = 'studios-years';
+      let data = getCache(key);
+      if (!data) { data = await scrapeStudiosAndYears(); setCache(key, data, 60 * 60 * 1000); }
+      return res.json({ success: true, data });
+    } catch (err) {
+      return res.status(500).json({ success: false, message: err.message });
+    }
+  }
+
   const genres = GENRES.map(g => ({ name: g.name, url: `https://hentaimama.io/genre/${g.slug}/` }));
   res.json({ success: true, data: genres, years: YEARS });
 };
