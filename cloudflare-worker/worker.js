@@ -24,26 +24,6 @@ export default {
     }
 
     const { searchParams } = new URL(request.url);
-    const targetUrl = searchParams.get('url');
-
-    if (!targetUrl) return jsonError('Parameter url diperlukan.', 400);
-
-    let finalUrl = targetUrl;
-    if (targetUrl.includes('hentaimama.io')) {
-      finalUrl = targetUrl.replace('https://', 'http://');
-    }
-
-    let parsed;
-    try {
-      parsed = new URL(finalUrl);
-    } catch {
-      return jsonError('URL tidak valid.', 400);
-    }
-
-    const isAllowed = ALLOWED_HOSTS.some(h =>
-      parsed.hostname === h || parsed.hostname.endsWith('.' + h)
-    );
-    if (!isAllowed) return jsonError(`Host ${parsed.hostname} tidak diizinkan.`, 403);
 
     // Special mode: ajax — fetch episode page first to get cookies, then POST AJAX
     if (searchParams.get('mode') === 'ajax') {
@@ -92,6 +72,26 @@ export default {
     }
 
     try {
+      const targetUrl = searchParams.get('url');
+      if (!targetUrl) return jsonError('Parameter url diperlukan.', 400);
+
+      let finalUrl = targetUrl;
+      if (targetUrl.includes('hentaimama.io')) {
+        finalUrl = targetUrl.replace('https://', 'http://');
+      }
+
+      let parsed;
+      try {
+        parsed = new URL(finalUrl);
+      } catch {
+        return jsonError('URL tidak valid.', 400);
+      }
+
+      const isAllowed = ALLOWED_HOSTS.some(h =>
+        parsed.hostname === h || parsed.hostname.endsWith('.' + h)
+      );
+      if (!isAllowed) return jsonError(`Host ${parsed.hostname} tidak diizinkan.`, 403);
+
       const method = request.method === 'POST' ? 'POST' : 'GET';
       const body = (method === 'POST') ? await request.text() : undefined;
       const contentType = request.headers.get('content-type') || 'application/x-www-form-urlencoded';
