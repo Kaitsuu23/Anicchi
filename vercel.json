@@ -7,6 +7,9 @@
   "rewrites": [
     { "source": "/api/studios-years", "destination": "/api/studios-years" },
     { "source": "/api/image", "destination": "/api/image" },
+    { "source": "/api/auth/register", "destination": "/api/auth/register" },
+    { "source": "/api/auth/login", "destination": "/api/auth/login" },
+    { "source": "/api/auth/me", "destination": "/api/auth/me" },
     { "source": "/api/release/:year", "destination": "/api/release?year=:year" },
     { "source": "/api/studio/:slug", "destination": "/api/studio?slug=:slug" },
     { "source": "/api/:path*", "destination": "/api/:path*" },

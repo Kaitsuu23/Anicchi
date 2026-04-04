@@ -1,37 +1,27 @@
-if (window.__authLoaded) throw new Error('auth.js already loaded');
-window.__authLoaded = true;
-
-const SUPABASE_URL = 'https://qjhjcpbftdrwsabzpwec.supabase.co';
-const SUPABASE_ANON_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6InFqaGpjcGJmdGRyd3NhYnpwd2VjIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzUzMTM0NDAsImV4cCI6MjA5MDg4OTQ0MH0.9twMdlMz17ql3Zfq8M8fcj1YEwZKLlYOcijFNFEwI7A';
-
-let _sb = null;
-function initSupabase() {
-  if (!_sb && window.supabase) {
-    _sb = window.supabase.createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
-  }
-  return _sb;
-}
-
-async function getSession() {
-  const sb = initSupabase();
-  if (!sb) return null;
-  const { data } = await sb.auth.getSession();
-  return data?.session ?? null;
-}
+// ─── Token helpers ───────────────────────────────────────────
+function getToken() { return localStorage.getItem('ez_token'); }
+function setToken(t) { localStorage.setItem('ez_token', t); }
+function removeToken() { localStorage.removeItem('ez_token'); }
 
 async function getUser() {
-  const session = await getSession();
-  return session?.user ?? null;
+  const token = getToken();
+  if (!token) return null;
+  try {
+    const res = await fetch('/api/auth/me', {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    if (!res.ok) { removeToken(); return null; }
+    const json = await res.json();
+    return json.success ? json.user : null;
+  } catch { return null; }
 }
 
-async function signOut() {
-  const sb = initSupabase();
-  await sb.auth.signOut();
+function signOut() {
+  removeToken();
   location.href = '/';
 }
 
-// ─── Login ──────────────────────────────────────────────────────
-
+// ─── Login ───────────────────────────────────────────────────
 async function handleLogin(e) {
   e.preventDefault();
   const form = e.target;
@@ -41,23 +31,33 @@ async function handleLogin(e) {
   setLoading(btn, true);
   clearMsg(errEl);
 
-  const { error } = await initSupabase().auth.signInWithPassword({
-    email: form.email.value.trim(),
-    password: form.password.value,
-  });
+  try {
+    const res = await fetch('/api/auth/login', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        email: form.email.value.trim(),
+        password: form.password.value,
+      }),
+    });
+    const json = await res.json();
 
-  if (error) {
-    showMsg(errEl, friendlyError(error.message), 'error');
+    if (!json.success) {
+      showMsg(errEl, json.message);
+      setLoading(btn, false);
+      return;
+    }
+
+    setToken(json.token);
+    const redirect = new URLSearchParams(location.search).get('redirect') || '/';
+    location.href = redirect;
+  } catch {
+    showMsg(errEl, 'Gagal terhubung ke server.');
     setLoading(btn, false);
-    return;
   }
-
-  const redirect = new URLSearchParams(location.search).get('redirect') || '/';
-  location.href = redirect;
 }
 
-// ─── Register ───────────────────────────────────────────────────
-
+// ─── Register ────────────────────────────────────────────────
 async function handleRegister(e) {
   e.preventDefault();
   const form = e.target;
@@ -70,33 +70,42 @@ async function handleRegister(e) {
   clearMsg(errEl);
   clearMsg(okEl);
 
-  if (password !== confirm) return showMsg(errEl, 'Password tidak cocok.', 'error');
-  if (password.length < 6) return showMsg(errEl, 'Password minimal 6 karakter.', 'error');
+  if (password !== confirm) return showMsg(errEl, 'Password tidak cocok.');
+  if (password.length < 6) return showMsg(errEl, 'Password minimal 6 karakter.');
 
   setLoading(btn, true);
 
-  const { error } = await initSupabase().auth.signUp({
-    email: form.email.value.trim(),
-    password,
-    options: { data: { username: form.username.value.trim() } },
-  });
+  try {
+    const res = await fetch('/api/auth/register', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        username: form.username.value.trim(),
+        email: form.email.value.trim(),
+        password,
+      }),
+    });
+    const json = await res.json();
 
-  setLoading(btn, false);
+    setLoading(btn, false);
 
-  if (error) return showMsg(errEl, friendlyError(error.message), 'error');
+    if (!json.success) return showMsg(errEl, json.message);
 
-  showMsg(okEl, 'Registrasi berhasil! Cek email kamu untuk konfirmasi akun.', 'success');
-  form.reset();
+    showMsg(okEl, 'Registrasi berhasil! Silakan login.', true);
+    setTimeout(() => location.href = '/login', 1500);
+  } catch {
+    showMsg(errEl, 'Gagal terhubung ke server.');
+    setLoading(btn, false);
+  }
 }
 
-// ─── UI helpers ─────────────────────────────────────────────────
-
+// ─── UI helpers ──────────────────────────────────────────────
 function setLoading(btn, loading) {
   btn.disabled = loading;
   btn.textContent = loading ? 'Loading...' : btn.dataset.label;
 }
 
-function showMsg(el, msg, type) {
+function showMsg(el, msg) {
   if (!el) return;
   el.textContent = msg;
   el.style.display = 'block';
@@ -108,30 +117,16 @@ function clearMsg(el) {
   el.style.display = 'none';
 }
 
-function friendlyError(msg) {
-  if (msg.includes('Invalid login credentials')) return 'Email atau password salah.';
-  if (msg.includes('Email not confirmed')) return 'Email belum dikonfirmasi. Cek inbox kamu.';
-  if (msg.includes('User already registered')) return 'Email sudah terdaftar.';
-  if (msg.includes('Password should be')) return 'Password minimal 6 karakter.';
-  if (msg.includes('Unable to validate email')) return 'Format email tidak valid.';
-  return msg;
-}
-
-// ─── Navbar auth slot ────────────────────────────────────────────
-
+// ─── Navbar auth slot ─────────────────────────────────────────
 async function renderAuthNav(container) {
   const user = await getUser();
   if (!user) {
     container.innerHTML = `<a href="/login" class="nav-link">Login</a>`;
     return;
   }
-  const sb = initSupabase();
-  const { data: profile } = await sb.from('users').select('username').eq('id', user.id).single();
-  const username = profile?.username || user.email.split('@')[0];
-
   container.innerHTML = `
     <div class="nav-dropdown">
-      <button class="nav-link dropdown-toggle">👤 ${username} ▾</button>
+      <button class="nav-link dropdown-toggle">👤 ${user.username} ▾</button>
       <div class="dropdown-menu" id="user-menu">
         <span class="dropdown-item" style="color:var(--muted);font-size:0.8rem">${user.email}</span>
         <div class="dropdown-divider"></div>
@@ -145,7 +140,6 @@ async function renderAuthNav(container) {
   document.addEventListener('click', () => menu.classList.remove('open'));
 }
 
-// Dipanggil oleh navbar.js setelah slot siap
 window.__renderAuthNavWhenReady = function () {
   const slot = document.getElementById('nav-auth-slot');
   if (slot) renderAuthNav(slot);

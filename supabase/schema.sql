@@ -1,77 +1,72 @@
 -- ============================================================
--- EcchiZone — Custom Users Table
+-- EcchiZone — Full Custom Auth Schema
 -- Jalankan di Supabase SQL Editor
 -- ============================================================
 
--- Table users publik (extend dari auth.users)
-CREATE TABLE IF NOT EXISTS public.users (
-  id          UUID PRIMARY KEY REFERENCES auth.users(id) ON DELETE CASCADE,
-  username    TEXT UNIQUE NOT NULL,
-  email       TEXT UNIQUE NOT NULL,
-  avatar_url  TEXT,
-  role        TEXT NOT NULL DEFAULT 'user' CHECK (role IN ('user', 'admin')),
-  created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-  updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW()
+-- ── Users table ──────────────────────────────────────────────
+CREATE TABLE IF NOT EXISTS users (
+  id            SERIAL PRIMARY KEY,
+  username      VARCHAR(50) UNIQUE NOT NULL,
+  email         VARCHAR(255) UNIQUE NOT NULL,
+  password_hash VARCHAR(255) NOT NULL,
+  created_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  updated_at    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  is_active     BOOLEAN DEFAULT true,
+  role          VARCHAR(20) DEFAULT 'user'
 );
 
--- Index untuk pencarian cepat
-CREATE INDEX IF NOT EXISTS users_username_idx ON public.users (username);
-CREATE INDEX IF NOT EXISTS users_email_idx    ON public.users (email);
+-- ── User sessions table ───────────────────────────────────────
+CREATE TABLE IF NOT EXISTS user_sessions (
+  id         SERIAL PRIMARY KEY,
+  user_id    INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(255) NOT NULL,
+  expires_at TIMESTAMP NOT NULL,
+  created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  user_agent TEXT,
+  ip_address INET
+);
 
--- ── RLS (Row Level Security) ─────────────────────────────────
-ALTER TABLE public.users ENABLE ROW LEVEL SECURITY;
+-- ── User favorites table ──────────────────────────────────────
+CREATE TABLE IF NOT EXISTS user_favorites (
+  id              SERIAL PRIMARY KEY,
+  user_id         INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  video_slug      VARCHAR(255) NOT NULL,
+  video_title     VARCHAR(500),
+  video_cover_url TEXT,
+  created_at      TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, video_slug)
+);
 
--- Siapa saja bisa lihat profil publik
-CREATE POLICY "users: public read"
-  ON public.users FOR SELECT
-  USING (true);
+-- ── User watch history table ──────────────────────────────────
+CREATE TABLE IF NOT EXISTS user_watch_history (
+  id              SERIAL PRIMARY KEY,
+  user_id         INTEGER REFERENCES users(id) ON DELETE CASCADE,
+  video_slug      VARCHAR(255) NOT NULL,
+  video_title     VARCHAR(500),
+  video_cover_url TEXT,
+  watch_progress  INTEGER DEFAULT 0,
+  last_watched    TIMESTAMP DEFAULT CURRENT_TIMESTAMP,
+  UNIQUE(user_id, video_slug)
+);
 
--- User hanya bisa update data dirinya sendiri
-CREATE POLICY "users: self update"
-  ON public.users FOR UPDATE
-  USING (auth.uid() = id)
-  WITH CHECK (auth.uid() = id);
+-- ── Indexes ───────────────────────────────────────────────────
+CREATE INDEX IF NOT EXISTS idx_users_email           ON users(email);
+CREATE INDEX IF NOT EXISTS idx_users_username        ON users(username);
+CREATE INDEX IF NOT EXISTS idx_sessions_user_id      ON user_sessions(user_id);
+CREATE INDEX IF NOT EXISTS idx_sessions_expires      ON user_sessions(expires_at);
+CREATE INDEX IF NOT EXISTS idx_favorites_user_id     ON user_favorites(user_id);
+CREATE INDEX IF NOT EXISTS idx_watch_history_user_id ON user_watch_history(user_id);
 
--- Insert hanya lewat trigger (bukan langsung dari client)
-CREATE POLICY "users: insert via trigger"
-  ON public.users FOR INSERT
-  WITH CHECK (auth.uid() = id);
-
--- ── Trigger: auto-insert ke public.users saat register ───────
-CREATE OR REPLACE FUNCTION public.handle_new_user()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-SECURITY DEFINER SET search_path = public
-AS $$
+-- ── Auto update updated_at ────────────────────────────────────
+CREATE OR REPLACE FUNCTION set_updated_at()
+RETURNS TRIGGER LANGUAGE plpgsql AS $$
 BEGIN
-  INSERT INTO public.users (id, username, email)
-  VALUES (
-    NEW.id,
-    COALESCE(NEW.raw_user_meta_data->>'username', split_part(NEW.email, '@', 1)),
-    NEW.email
-  );
+  NEW.updated_at = CURRENT_TIMESTAMP;
   RETURN NEW;
 END;
 $$;
 
--- Pasang trigger ke auth.users
-DROP TRIGGER IF EXISTS on_auth_user_created ON auth.users;
-CREATE TRIGGER on_auth_user_created
-  AFTER INSERT ON auth.users
-  FOR EACH ROW EXECUTE FUNCTION public.handle_new_user();
-
--- ── Trigger: auto-update updated_at ──────────────────────────
-CREATE OR REPLACE FUNCTION public.set_updated_at()
-RETURNS TRIGGER
-LANGUAGE plpgsql
-AS $$
-BEGIN
-  NEW.updated_at = NOW();
-  RETURN NEW;
-END;
-$$;
-
-DROP TRIGGER IF EXISTS users_updated_at ON public.users;
+DROP TRIGGER IF EXISTS users_updated_at ON users;
 CREATE TRIGGER users_updated_at
-  BEFORE UPDATE ON public.users
-  FOR EACH ROW EXECUTE FUNCTION public.set_updated_at();
+  BEFORE UPDATE ON users
+  FOR EACH ROW EXECUTE FUNCTION set_updated_at();
