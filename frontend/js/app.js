@@ -64,10 +64,10 @@ const SEE_ALL_MAP = {
 
 function renderSections(sections) {
   if (!sections.length) {
-    main.innerHTML = `<div class="error-msg"><span>🎬</span>Tidak ada data ditemukan.</div>`;
+    main.innerHTML += `<div class="error-msg"><span>🎬</span>Tidak ada data ditemukan.</div>`;
     return;
   }
-  main.innerHTML = sections.map(s => {
+  main.innerHTML += sections.map(s => {
     const isEpisode = s.section === 'Recent Episodes';
     const gridClass = isEpisode ? 'grid grid-episode' : 'grid';
     const seeAllHref = SEE_ALL_MAP[s.section] || null;
@@ -111,6 +111,7 @@ async function loadHome() {
 
     // Cek login untuk Continue Watching
     const token = localStorage.getItem('ez_token');
+    let continueHtml = '';
     if (token) {
       try {
         const histRes = await fetch(`${API}/auth?action=history&limit=8`, {
@@ -118,14 +119,12 @@ async function loadHome() {
         });
         const histJson = await histRes.json();
         if (histJson.success && histJson.data.length > 0) {
-          const continueSection = renderContinueWatching(histJson.data);
-          main.innerHTML = continueSection;
-          renderSections(json.data);
-          return;
+          continueHtml = renderContinueWatching(histJson.data);
         }
       } catch { /* silent */ }
     }
 
+    main.innerHTML = continueHtml;
     renderSections(json.data);
   } catch (err) {
     main.innerHTML = `<div class="error-msg"><span>⚠️</span>${err.message}</div>`;

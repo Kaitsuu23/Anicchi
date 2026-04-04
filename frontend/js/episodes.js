@@ -198,9 +198,11 @@ async function loadEpisode() {
       series_title: d.seriesTitle || d.title,
       watch_progress: 0,
     });
+
+    // Resume dari progress terakhir
+    resumeProgress(epSlug);
+
     // Update progress setiap 15 detik saat nonton
-    let _historyTimer = null;
-    document.addEventListener('timeupdate', () => {}, true);
     const _progressInterval = setInterval(() => {
       const v = document.getElementById('ep-video');
       if (!v || !v.duration) return;
@@ -570,7 +572,7 @@ function renderPlayer(srcs) {
 // ── Watch History helper ──────────────────────────────────────
 async function saveWatchHistory(data) {
   const token = localStorage.getItem('ez_token');
-  if (!token) return; // tidak login, skip
+  if (!token) return;
   try {
     await fetch('/api/auth?action=history', {
       method: 'POST',
@@ -578,4 +580,46 @@ async function saveWatchHistory(data) {
       body: JSON.stringify(data),
     });
   } catch { /* silent fail */ }
+}
+
+async function resumeProgress(slug) {
+  const token = localStorage.getItem('ez_token');
+  if (!token) return;
+  try {
+    const res = await fetch(`/api/auth?action=history&limit=50`, {
+      headers: { Authorization: `Bearer ${token}` }
+    });
+    const json = await res.json();
+    if (!json.success) return;
+    const item = json.data.find(h => h.video_slug === slug);
+    if (!item || !item.watch_progress || item.watch_progress < 10) return;
+
+    const progress = item.watch_progress;
+
+    // Tunggu video siap lalu seek
+    function trySeek() {
+      const v = document.getElementById('ep-video');
+      if (!v) return;
+      if (v.readyState >= 1 && v.duration) {
+        // Jangan resume kalau sudah hampir selesai (>95%)
+        if (progress / v.duration > 0.95) return;
+        v.currentTime = progress;
+        showResumeToast(progress);
+      } else {
+        v.addEventListener('loadedmetadata', () => {
+          if (progress / v.duration > 0.95) return;
+          v.currentTime = progress;
+          showResumeToast(progress);
+        }, { once: true });
+      }
+    }
+    // Tunggu player render dulu
+    setTimeout(trySeek, 500);
+  } catch { /* silent */ }
+}
+
+function showResumeToast(seconds) {
+  const m = Math.floor(seconds / 60);
+  const s = seconds % 60;
+  showToast(`▶ Lanjut dari ${m}:${String(s).padStart(2,'0')}`);
 }
