@@ -467,12 +467,9 @@ async function loadPlayerViaAjax(postId, epUrl) {
   console.log('[player] Starting AJAX for postId:', postId);
 
   try {
-    // Hanya via Worker — direct ke hentaimama kena CORS block
-    const res = await fetch(`${WORKER}?url=${encodeURIComponent('http://hentaimama.io/wp-admin/admin-ajax.php')}`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: `action=get_player_contents&a=${postId}`,
-    });
+    // Pakai mode=ajax di worker supaya cookies episode ikut dikirim ke AJAX
+    const ajaxUrl = `${WORKER}?mode=ajax&postId=${encodeURIComponent(postId)}&epUrl=${encodeURIComponent(epUrl)}`;
+    const res = await fetch(ajaxUrl);
 
     const text = await res.text();
     console.log('[player] AJAX response:', text.slice(0, 100));
