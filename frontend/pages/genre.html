@@ -1,0 +1,73 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/icon/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icon/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon/apple-touch-icon.png" />
+  <link rel="manifest" href="/icon/site.webmanifest" />
+  <title>Genre – EcchiZone</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <nav data-subtitle="Genre"><div><a href="/" class="nav-logo">⬡ EcchiZone</a><div class="nav-subtitle" id="nav-sub">Genre</div></div></nav>
+  <main>
+    <div class="section-header" style="margin-bottom:1rem">
+      <h2 class="section-title" id="genre-title">Genre</h2>
+    </div>
+    <div class="sort-bar" id="sort-bar" style="display:none">
+      <button class="sort-btn" id="btn-rating">By Rating</button>
+      <span class="sort-label">Views:</span>
+      <button class="sort-btn" id="btn-weekly">week</button>
+      <button class="sort-btn" id="btn-monthly">month</button>
+      <button class="sort-btn active" id="btn-alltime">all time</button>
+    </div>
+    <div id="page-grid" class="series-grid"></div>
+    <div id="pagination" class="pagination-bar"></div>
+  </main>
+  <script>
+    // Baca slug dari /genre/cutefunny/
+    const slug = location.pathname.replace(/^\/genre\//, '').replace(/\/$/, '');
+
+    document.title = `Genre – EcchiZone`;
+
+    fetch('/api/genres')
+      .then(r => r.json())
+      .then(json => {
+        const found = json.data.find(g => g.url.includes(`/genre/${slug}/`));
+        const name = found ? found.name : slug;
+        const BASE_URL = found ? found.url : `https://hentaimama.io/genre/${slug}/`;
+
+        document.title = `${name} – EcchiZone`;
+        document.getElementById('genre-title').textContent = name;
+        // Update nav subtitle dan data attribute
+        document.querySelector('nav').dataset.subtitle = name;
+        const navSub = document.querySelector('.nav-subtitle');
+        if (navSub) navSub.textContent = name;
+
+        document.getElementById('sort-bar').style.display = 'flex';
+        const btns = {
+          'btn-rating': BASE_URL + '?filter=rating',
+          'btn-weekly': BASE_URL + '?filter=weekly',
+          'btn-monthly': BASE_URL + '?filter=monthly',
+          'btn-alltime': BASE_URL + '?filter=alltime',
+        };
+        Object.entries(btns).forEach(([id, url]) => {
+          document.getElementById(id)?.addEventListener('click', function() {
+            document.querySelectorAll('.sort-btn').forEach(b => b.classList.remove('active'));
+            this.classList.add('active');
+            loadPage(url);
+          });
+        });
+
+        window._GENRE_BASE_URL = BASE_URL;
+        if (typeof loadPage === 'function') loadPage(BASE_URL);
+      });
+  </script>
+  <script>const BASE_URL = ''; const CARD_LINK_PREFIX = '/detail';</script>
+  <script src="/js/pagelist.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script src="/js/footer.js"></script>
+</body>
+</html>

@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8" /><meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="icon" type="image/x-icon" href="/icon/favicon.ico" />
+  <link rel="icon" type="image/png" sizes="32x32" href="/icon/favicon-32x32.png" />
+  <link rel="icon" type="image/png" sizes="16x16" href="/icon/favicon-16x16.png" />
+  <link rel="apple-touch-icon" sizes="180x180" href="/icon/apple-touch-icon.png" />
+  <link rel="manifest" href="/icon/site.webmanifest" />
+  <title>Recent Series – EcchiZone</title>
+  <link rel="stylesheet" href="/css/style.css" />
+</head>
+<body>
+  <nav><div><a href="/" class="nav-logo">⬡ EcchiZone</a><div class="nav-subtitle">Recent Series</div></div></nav>
+  <main>
+    <div class="section-header" style="margin-bottom:1rem">
+      <h2 class="section-title">Recent Series</h2>
+    </div>
+    <div class="sort-bar">
+      <button class="sort-btn" data-url="https://hentaimama.io/tvshows/?filter=rating">By Rating</button>
+      <span class="sort-label">Views:</span>
+      <button class="sort-btn" data-url="https://hentaimama.io/tvshows/?filter=weekly">week</button>
+      <button class="sort-btn" data-url="https://hentaimama.io/tvshows/?filter=monthly">month</button>
+      <button class="sort-btn active" data-url="https://hentaimama.io/tvshows/?filter=alltime">all time</button>
+    </div>
+    <div id="page-grid" class="series-grid"></div>
+    <div id="pagination" class="pagination-bar"></div>
+  </main>
+  <script>const BASE_URL = 'https://hentaimama.io/tvshows/'; const CARD_LINK_PREFIX = '/detail';</script>
+  <script src="/js/pagelist.js"></script>
+  <script src="/js/sortpage.js"></script>
+  <script src="/js/navbar.js"></script>
+  <script src="/js/footer.js"></script>
+</body>
+</html>

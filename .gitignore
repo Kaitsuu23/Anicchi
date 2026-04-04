@@ -1,0 +1,4 @@
+node_modules/
+.env
+ecchizone_app/
+puppeteer-service/
