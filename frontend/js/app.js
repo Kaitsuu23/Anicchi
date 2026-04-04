@@ -90,7 +90,8 @@ function renderSections(sections) {
 }
 
 function scrollSection(btn, dir) {
-  const grid = btn.closest('.section-block').querySelector('.grid');
+  const block = btn.closest('.section-block');
+  const grid = block.querySelector('.cw-grid') || block.querySelector('.grid');
   grid.scrollBy({ left: dir * 660, behavior: 'smooth' });
 }
 
@@ -135,27 +136,47 @@ function renderContinueWatching(items) {
   const cards = items.map(item => {
     const progress = item.watch_progress || 0;
     const href = `/episodes/${item.video_slug}/`;
-    const cover = item.video_cover_url || 'https://placehold.co/200x280/0a0a0f/444?text=N/A';
-    const progressBar = `
-      <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.1)">
-        <div style="height:100%;background:var(--accent);width:${Math.min(100, (progress / 1500) * 100)}%;border-radius:2px"></div>
-      </div>`;
+    const cover = item.video_cover_url || 'https://placehold.co/320x180/0a0a0f/444?text=N/A';
+    const pct = Math.min(100, Math.round((progress / 1500) * 100));
+    const timeStr = progress > 0 ? `${Math.floor(progress/60)}:${String(progress%60).padStart(2,'0')}` : '';
     return `
-      <a class="card" href="${href}" title="${item.video_title || ''}">
-        <div class="card-poster" style="position:relative">
-          <img class="card-thumb" src="${cover}" alt="${item.video_title || ''}" loading="lazy"
-            onerror="this.src='https://placehold.co/200x280/0a0a0f/444?text=N/A'" />
-          <div class="card-series-overlay">${item.series_title || item.video_title || ''}</div>
-          ${progressBar}
+      <a class="cw-card" href="${href}" title="${item.video_title || ''}">
+        <div class="cw-thumb">
+          <img src="${cover}" alt="${item.video_title || ''}" loading="lazy"
+            onerror="this.src='https://placehold.co/320x180/0a0a0f/444?text=N/A'" />
+          <div class="cw-overlay">
+            <div class="cw-play">
+              <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M8 5v14l11-7z"/></svg>
+            </div>
+            ${timeStr ? `<span class="cw-time">${timeStr}</span>` : ''}
+          </div>
+          <div class="cw-progress">
+            <div class="cw-progress-fill" style="width:${pct}%"></div>
+          </div>
         </div>
-        <div class="card-body">
-          <div class="card-title">${item.video_title || ''}</div>
-          ${progress > 0 ? `<div class="card-date">⏱ ${Math.floor(progress/60)}m ${progress%60}s</div>` : ''}
-        </div>
+        <div class="cw-title">${item.series_title || item.video_title || ''}</div>
       </a>`;
   }).join('');
 
   return `
+    <style>
+      .cw-grid { display:flex; gap:1rem; overflow-x:auto; padding:0.5rem 0.5rem 1rem; scrollbar-width:thin; scrollbar-color:var(--accent) transparent; }
+      .cw-grid::-webkit-scrollbar { height:4px; }
+      .cw-grid::-webkit-scrollbar-thumb { background:var(--accent); border-radius:4px; }
+      .cw-card { flex:0 0 220px; text-decoration:none; color:inherit; transition:transform 0.3s ease; }
+      .cw-card:hover { transform:translateY(-4px); }
+      .cw-thumb { position:relative; width:100%; aspect-ratio:16/9; border-radius:10px; overflow:hidden; background:#000; border:1px solid var(--glass-border); }
+      .cw-thumb img { width:100%; height:100%; object-fit:cover; transition:transform 0.4s ease; }
+      .cw-card:hover .cw-thumb img { transform:scale(1.05); filter:brightness(0.7); }
+      .cw-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s; }
+      .cw-card:hover .cw-overlay { opacity:1; }
+      .cw-play { width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); border:1.5px solid rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
+      .cw-time { position:absolute; bottom:28px; right:8px; font-size:0.7rem; font-weight:700; background:rgba(0,0,0,0.75); padding:2px 6px; border-radius:4px; color:#fff; }
+      .cw-progress { position:absolute; bottom:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.15); }
+      .cw-progress-fill { height:100%; background:var(--accent); border-radius:2px; }
+      .cw-title { font-size:0.78rem; font-weight:600; color:var(--muted); margin-top:0.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+      .cw-card:hover .cw-title { color:#fff; }
+    </style>
     <div class="section-block">
       <div class="section-header">
         <h2 class="section-title">Continue Watching</h2>
@@ -164,7 +185,7 @@ function renderContinueWatching(items) {
           <button class="arrow-btn" onclick="scrollSection(this, 1)">›</button>
         </div>
       </div>
-      <div class="grid">${cards}</div>
+      <div class="cw-grid">${cards}</div>
     </div>`;
 }
 
