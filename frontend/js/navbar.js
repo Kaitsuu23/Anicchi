@@ -1,6 +1,24 @@
 const NAVBAR_API = '/api';
 const currentPage = location.pathname.replace(/^\//, '').split('/')[0] || '';
 
+// Inject Supabase CDN + auth.js jika belum ada
+(function injectAuth() {
+  if (!document.querySelector('script[src*="supabase"]')) {
+    const sb = document.createElement('script');
+    sb.src = 'https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js';
+    sb.onload = () => {
+      const auth = document.createElement('script');
+      auth.src = '/js/auth.js';
+      document.head.appendChild(auth);
+    };
+    document.head.appendChild(sb);
+  } else if (!document.querySelector('script[src*="auth.js"]')) {
+    const auth = document.createElement('script');
+    auth.src = '/js/auth.js';
+    document.head.appendChild(auth);
+  }
+})();
+
 const NAV_ITEMS = [
   { label: 'Series', href: '/series/', id: 'series' },
   { label: 'Uncensored', href: '/uncensored/', id: 'uncensored' },
@@ -50,15 +68,10 @@ document.addEventListener('DOMContentLoaded', () => {
   });
   document.addEventListener('click', () => menu.classList.remove('open'));
 
-  // Render auth state jika auth.js tersedia
-  const authSlot = document.getElementById('nav-auth-slot');
-  if (authSlot && typeof renderAuthNav === 'function') {
-    renderAuthNav(authSlot);
-  } else if (authSlot) {
-    // auth.js belum load, tunggu sebentar
-    setTimeout(() => {
-      if (typeof renderAuthNav === 'function') renderAuthNav(authSlot);
-    }, 100);
+  // Render auth state — dipanggil dari auth.js setelah load
+  window.__navAuthSlotReady = true;
+  if (typeof window.__renderAuthNavWhenReady === 'function') {
+    window.__renderAuthNavWhenReady();
   }
 });
 

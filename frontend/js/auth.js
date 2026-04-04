@@ -139,7 +139,16 @@ function friendlyError(msg) {
   return msg;
 }
 
-// ─── Navbar user state ──────────────────────────────────────────
+// ─── Auto-render auth di navbar saat script ini load ────────
+window.__renderAuthNavWhenReady = function () {
+  const slot = document.getElementById('nav-auth-slot');
+  if (slot) renderAuthNav(slot);
+};
+
+// Kalau navbar sudah siap duluan, langsung render
+if (window.__navAuthSlotReady) {
+  window.__renderAuthNavWhenReady();
+}
 
 async function renderAuthNav(container) {
   const user = await getUser();
