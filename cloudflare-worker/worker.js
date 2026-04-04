@@ -38,15 +38,26 @@ export default {
             'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/124.0.0.0 Safari/537.36',
             'Accept': 'text/html,application/xhtml+xml,*/*;q=0.9',
             'Accept-Language': 'en-US,en;q=0.9',
+            'Cache-Control': 'no-cache',
+            'Pragma': 'no-cache',
           },
           redirect: 'follow',
         });
 
-        // Collect cookies
+        // Collect ALL cookies including from redirects
         const setCookies = pageRes.headers.getSetCookie?.() || [];
         const cookieStr = setCookies.map(c => c.split(';')[0]).join('; ');
 
-        // Step 2: POST AJAX with those cookies
+        // Also extract nonce from page HTML if present
+        const pageHtml = await pageRes.text();
+        const nonceMatch = pageHtml.match(/"nonce"\s*:\s*"([a-f0-9]+)"/);
+        const nonce = nonceMatch ? nonceMatch[1] : '';
+
+        // Step 2: POST AJAX with cookies and nonce
+        const body = nonce
+          ? `action=get_player_contents&a=${postId}&nonce=${nonce}`
+          : `action=get_player_contents&a=${postId}`;
+
         const ajaxRes = await fetch('http://hentaimama.io/wp-admin/admin-ajax.php', {
           method: 'POST',
           headers: {
@@ -56,12 +67,39 @@ export default {
             'Referer': epUrl.replace('https://', 'http://'),
             'Origin': 'http://hentaimama.io',
             'Accept': '*/*',
+            'Accept-Language': 'en-US,en;q=0.9',
             ...(cookieStr ? { 'Cookie': cookieStr } : {}),
           },
-          body: `action=get_player_contents&a=${postId}`,
+          body,
         });
 
         const text = await ajaxRes.text();
+
+        // If AJAX returns 0 (blocked), try extracting from page HTML directly
+        if (text.trim() === '0' || text.trim() === '') {
+          // Try to find player data embedded in page HTML
+          const iframeMatch = pageHtml.match(/id="option-1"[^>]*>([\s\S]*?)<\/div>/i);
+          if (iframeMatch && iframeMatch[1].trim()) {
+            return new Response(JSON.stringify([iframeMatch[1].trim()]), {
+              status: 200,
+              headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+            });
+          }
+          // Try new2.php approach as fallback — extract postId-based path
+          const new2Match = pageHtml.match(/new2\.php\?p=([A-Za-z0-9+/=]+)/);
+          if (new2Match) {
+            const new2Res = await fetch(`http://hentaimama.io/new2.php?p=${new2Match[1]}`);
+            const new2Html = await new2Res.text();
+            const mp4Match = new2Html.match(/file\s*:\s*["']([^"']+)["']/i);
+            if (mp4Match) {
+              return new Response(JSON.stringify([`<iframe src="${mp4Match[1]}"></iframe>`]), {
+                status: 200,
+                headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
+              });
+            }
+          }
+        }
+
         return new Response(text, {
           status: 200,
           headers: { ...corsHeaders(), 'Content-Type': 'application/json' },
@@ -95,6 +133,7 @@ export default {
       const method = request.method === 'POST' ? 'POST' : request.method === 'HEAD' ? 'HEAD' : 'GET';
       const body = (method === 'POST') ? await request.text() : undefined;
       const contentType = request.headers.get('content-type') || 'application/x-www-form-urlencoded';
+      const rangeHeader = request.headers.get('range');
 
       const response = await fetch(finalUrl, {
         method,
@@ -107,6 +146,7 @@ export default {
           'Origin': 'http://hentaimama.io',
           'X-Requested-With': 'XMLHttpRequest',
           ...(method === 'POST' ? { 'Content-Type': contentType } : {}),
+          ...(rangeHeader ? { 'Range': rangeHeader } : {}),
         },
         redirect: 'follow',
       });

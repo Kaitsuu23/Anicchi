@@ -64,9 +64,11 @@ async function loadEpisode() {
       ).join('');
 
       const webSrc = getWebSrc(firstPlayer);
+      const directSrc = firstPlayer.src;
       const initialPlayerContent = firstPlayer.type === 'iframe'
         ? `<iframe id="ep-iframe" src="${webSrc}" frameborder="0" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"></iframe>`
-        : `<video id="ep-video" preload="metadata" style="width:100%;height:100%">
+        : `<video id="ep-video" preload="metadata" style="width:100%;height:100%"
+            onerror="if(this.src!=='${directSrc}'){this.src='${directSrc}';this.load();}">
             <source src="${webSrc}" type="video/mp4">
           </video>
           <div class="player-overlay" id="player-overlay">
