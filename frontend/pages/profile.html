@@ -30,7 +30,13 @@
       display: flex; align-items: center; justify-content: center;
       font-size: 2rem; font-weight: 800; color: #fff; flex-shrink: 0;
       border: 2px solid var(--glass-border);
-      box-shadow: 0 0 20px var(--glow);
+      box-shadow: 0 0 20px var((--glow));
+      cursor: pointer; position: relative; overflow: hidden;
+    }
+    .profile-avatar:hover::after {
+      content: '📷'; position: absolute; inset: 0;
+      background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
+      font-size: 1.5rem; border-radius: 50%;
     }
     .profile-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
     .profile-name { font-size: 1.4rem; font-weight: 800; color: #fff; }
@@ -86,6 +92,14 @@
     .danger-btn:hover { background: rgba(239,68,68,0.2); border-color: #f87171; }
 
     .joined { font-size: 0.8rem; color: var(--muted); margin-top: 4px; }
+
+    .avatar-tab {
+      padding: 0.35rem 0.85rem; border-radius: 8px; font-size: 0.8rem; font-weight: 600;
+      background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
+      color: var(--muted); cursor: pointer; transition: all 0.2s; font-family: 'Inter', sans-serif;
+    }
+    .avatar-tab.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+    .avatar-tab:hover:not(.active) { border-color: var(--accent); color: #fff; }
   </style>
 </head>
 <body>
@@ -96,7 +110,8 @@
       <!-- Profile Header Card -->
       <div class="profile-card">
         <div class="profile-header">
-          <div class="profile-avatar" id="avatar-display">?</div>
+          <div class="profile-avatar" id="avatar-display" onclick="document.getElementById('avatar-file-input').click()" title="Klik untuk ganti avatar">?</div>
+          <input type="file" id="avatar-file-input" accept="image/*" style="display:none" />
           <div>
             <div class="profile-name" id="display-username">—</div>
             <div class="profile-email" id="display-email">—</div>
@@ -133,8 +148,25 @@
             <input class="form-input" type="text" id="input-username" placeholder="username baru" minlength="3" maxlength="50" />
           </div>
           <div class="form-group">
-            <label class="form-label">Avatar URL</label>
-            <input class="form-input" type="url" id="input-avatar" placeholder="https://..." />
+            <label class="form-label">Avatar</label>
+            <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
+              <button type="button" class="avatar-tab active" id="tab-url" onclick="switchAvatarTab('url')">🔗 URL</button>
+              <button type="button" class="avatar-tab" id="tab-upload" onclick="switchAvatarTab('upload')">📁 Upload</button>
+            </div>
+            <div id="avatar-url-section">
+              <input class="form-input" type="url" id="input-avatar" placeholder="https://..." />
+            </div>
+            <div id="avatar-upload-section" style="display:none">
+              <div id="upload-drop" style="border:2px dashed var(--glass-border);border-radius:10px;padding:1.5rem;text-align:center;cursor:pointer;transition:all 0.3s;color:var(--muted);font-size:0.9rem"
+                onclick="document.getElementById('avatar-file-input').click()"
+                ondragover="event.preventDefault();this.style.borderColor='var(--accent)'"
+                ondragleave="this.style.borderColor='var(--glass-border)'"
+                ondrop="handleAvatarDrop(event)">
+                📁 Klik atau drag gambar ke sini<br>
+                <span style="font-size:0.75rem">JPG, PNG, GIF, WebP — max 2MB</span>
+              </div>
+              <div id="upload-status" style="font-size:0.82rem;color:var(--muted);margin-top:0.5rem;display:none"></div>
+            </div>
           </div>
           <button type="submit" class="save-btn" data-label="Simpan Perubahan">Simpan Perubahan</button>
         </form>
@@ -168,6 +200,7 @@
     </div>
   </main>
 
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/navbar.js"></script>
   <script src="/js/footer.js"></script>
@@ -199,6 +232,68 @@
         avatarEl.textContent = d.username[0].toUpperCase();
       }
     })();
+
+    function switchAvatarTab(tab) {
+      document.getElementById('tab-url').classList.toggle('active', tab === 'url');
+      document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
+      document.getElementById('avatar-url-section').style.display = tab === 'url' ? '' : 'none';
+      document.getElementById('avatar-upload-section').style.display = tab === 'upload' ? '' : 'none';
+    }
+
+    function handleAvatarDrop(e) {
+      e.preventDefault();
+      document.getElementById('upload-drop').style.borderColor = 'var(--glass-border)';
+      const file = e.dataTransfer.files[0];
+      if (file) uploadAvatar(file);
+    }
+
+    document.getElementById('avatar-file-input').addEventListener('change', (e) => {
+      const file = e.target.files[0];
+      if (file) uploadAvatar(file);
+    });
+
+    async function uploadAvatar(file) {
+      if (file.size > 2 * 1024 * 1024) {
+        alert('File terlalu besar. Maksimal 2MB.'); return;
+      }
+      const status = document.getElementById('upload-status');
+      status.style.display = 'block';
+      status.textContent = '⏳ Mengupload...';
+
+      const token = localStorage.getItem('ez_token');
+      // Get supabase config
+      const cfgRes = await fetch('/api/auth?action=avatar-url', { headers: { Authorization: `Bearer ${token}` } });
+      const cfg = await cfgRes.json();
+      if (!cfg.success) { status.textContent = '❌ Gagal mendapat config upload.'; return; }
+
+      // Upload ke Supabase Storage langsung dari browser
+      const { createClient } = window.supabase;
+      const sb = createClient(cfg.supabaseUrl, cfg.supabaseAnonKey);
+      const ext = file.name.split('.').pop();
+      const path = `avatars/${cfg.userId}.${ext}`;
+
+      const { error } = await sb.storage.from('avatars').upload(path, file, { upsert: true, contentType: file.type });
+      if (error) { status.textContent = `❌ Upload gagal: ${error.message}`; return; }
+
+      const { data: { publicUrl } } = sb.storage.from('avatars').getPublicUrl(path);
+      document.getElementById('input-avatar').value = publicUrl;
+      status.textContent = '✅ Upload berhasil!';
+
+      // Preview
+      updateAvatarDisplay(publicUrl);
+      // Auto-save
+      await fetch('/api/auth?action=profile', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ avatar_url: publicUrl }),
+      });
+    }
+
+    function updateAvatarDisplay(url) {
+      const el = document.getElementById('avatar-display');
+      const username = document.getElementById('display-username').textContent;
+      el.innerHTML = `<img src="${url}" onerror="this.parentElement.textContent='${username[0]?.toUpperCase()}'" />`;
+    }
 
     // Edit profile
     document.getElementById('edit-form').addEventListener('submit', async (e) => {

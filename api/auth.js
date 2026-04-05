@@ -28,7 +28,18 @@ module.exports = async (req, res) => {
     return res.json({ success: true, user });
   }
 
-  // ── PROFILE GET ──────────────────────────────────────────────
+  // ── AVATAR UPLOAD URL ────────────────────────────────────────
+  if (action === 'avatar-url' && req.method === 'GET') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    // Return Supabase config untuk upload langsung dari browser
+    return res.json({
+      success: true,
+      supabaseUrl: process.env.SUPABASE_URL,
+      supabaseAnonKey: process.env.SUPABASE_ANON_KEY,
+      userId: user.id,
+    });
+  }
   if (action === 'profile' && req.method === 'GET') {
     const user = verifyToken(req);
     if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
