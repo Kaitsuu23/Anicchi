@@ -144,11 +144,14 @@ function renderContinueWatching(items) {
     const cover = item.video_cover_url || 'https://placehold.co/320x180/0a0a0f/444?text=N/A';
     const pct = Math.min(100, Math.round((progress / duration) * 100));
     const timeStr = progress > 0 ? `${Math.floor(progress/60)}:${String(progress%60).padStart(2,'0')}` : '';
+    const epMatch = item.video_title?.match(/Episode\s+\d+/i);
+    const epBadge = epMatch ? `<div class="cw-badge">${epMatch[0].toUpperCase()}</div>` : '';
     return `
       <a class="cw-card" href="${href}" title="${item.video_title || ''}">
         <div class="cw-thumb">
           <img src="${cover}" alt="${item.video_title || ''}" loading="lazy"
             onerror="this.src='https://placehold.co/320x180/0a0a0f/444?text=N/A'" />
+          ${epBadge}
           <div class="cw-overlay">
             <div class="cw-play">
               <svg viewBox="0 0 24 24" fill="currentColor" width="28" height="28"><path d="M8 5v14l11-7z"/></svg>
@@ -179,6 +182,7 @@ function renderContinueWatching(items) {
       .cw-time { position:absolute; bottom:28px; right:8px; font-size:0.7rem; font-weight:700; background:rgba(0,0,0,0.75); padding:2px 6px; border-radius:4px; color:#fff; }
       .cw-progress { position:absolute; bottom:0; left:0; right:0; height:4px; background:rgba(255,255,255,0.2); border-radius:0 0 8px 8px; }
       .cw-progress-fill { height:100%; background:linear-gradient(90deg, var(--accent2), var(--accent)); border-radius:0 0 8px 8px; min-width:3px; box-shadow:0 0 6px var(--glow); transition:width 0.3s; }
+      .cw-badge { position:absolute; top:8px; left:8px; font-size:0.65rem; font-weight:800; background:var(--accent); color:#fff; padding:2px 8px; border-radius:4px; box-shadow:0 2px 10px rgba(0,0,0,0.5); z-index:2; text-shadow: 0 1px 2px rgba(0,0,0,0.5); }
       .cw-title { font-size:0.78rem; font-weight:600; color:var(--muted); margin-top:0.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
       .cw-card:hover .cw-title { color:#fff; }
     </style>

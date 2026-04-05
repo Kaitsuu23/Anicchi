@@ -59,18 +59,18 @@
             <a class="card" href="${href}" title="${item.video_title || ''}">
               <div class="card-poster">
                 <img class="card-thumb" src="${cover}" alt="${item.video_title || ''}" loading="lazy"
-                  onerror="this.src='https://placehold.co/200x280/0a0a0f/444?text=N/A'" />
+                  onerror="this.src='https://placehold.co/200x280/0a0a0f/444?text=No+Image'" />
                 <div class="card-series-overlay">${item.video_title || ''}</div>
+                <button onclick="event.preventDefault(); event.stopPropagation(); removeFav('${item.video_slug}', this)" title="Hapus dari favorit"
+                  style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f87171;cursor:pointer;padding:4px 8px;font-size:0.75rem;z-index:5">
+                  <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
+                </button>
               </div>
               <div class="card-body">
                 <div class="card-title">${item.video_title || ''}</div>
                 <div class="card-date">${date}</div>
               </div>
             </a>
-            <button onclick="removeFav('${item.video_slug}', this)" title="Hapus dari favorit"
-              style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.75);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f87171;cursor:pointer;padding:4px 8px;font-size:0.75rem;z-index:5">
-              <svg width="12" height="12" viewBox="0 0 24 24" fill="currentColor"><path d="M19 6.41L17.59 5 12 10.59 6.41 5 5 6.41 10.59 12 5 17.59 6.41 19 12 13.41 17.59 19 19 17.59 13.41 12z"/></svg>
-            </button>
           </div>`;
       }).join('');
     })();
