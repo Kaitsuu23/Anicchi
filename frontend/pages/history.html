@@ -71,6 +71,7 @@
                   <img class="card-thumb" src="${cover}" alt="${item.video_title || ''}" loading="lazy"
                     onerror="this.src='https://placehold.co/200x280/0a0a0f/444?text=N/A'" />
                   ${epBadge}
+                  <div class="card-series-overlay">${item.series_title || item.video_title || ''}</div>
                   <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.1)">
                     <div style="height:100%;background:var(--accent);width:${pct}%;border-radius:2px"></div>
                   </div>
@@ -78,7 +79,6 @@
                     style="position:absolute;top:8px;right:8px;background:rgba(0,0,0,0.7);border:1px solid rgba(255,255,255,0.1);border-radius:6px;color:#f87171;cursor:pointer;padding:4px 8px;font-size:0.75rem;z-index:5">✕</button>
                 </div>
                 <div class="card-body">
-                  <div class="card-title">${item.video_title || ''}</div>
                   <div class="card-date">${timeStr ? `⏱ ${timeStr} · ` : ''}${date}</div>
                 </div>
               </a>
