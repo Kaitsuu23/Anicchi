@@ -178,7 +178,7 @@ function renderContinueWatching(items) {
       .cw-play { width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); border:1.5px solid rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
       .cw-time { position:absolute; bottom:28px; right:8px; font-size:0.7rem; font-weight:700; background:rgba(0,0,0,0.75); padding:2px 6px; border-radius:4px; color:#fff; }
       .cw-progress { position:absolute; bottom:0; left:0; right:0; height:4px; background:rgba(255,255,255,0.2); border-radius:0 0 8px 8px; }
-      .cw-progress-fill { height:100%; background:linear-gradient(90deg, var(--accent2), var(--accent)); border-radius:0 0 8px 8px; min-width:${pct > 0 ? '4px' : '0'}; box-shadow:0 0 6px var(--glow); transition:width 0.3s; }
+      .cw-progress-fill { height:100%; background:linear-gradient(90deg, var(--accent2), var(--accent)); border-radius:0 0 8px 8px; min-width:3px; box-shadow:0 0 6px var(--glow); transition:width 0.3s; }
       .cw-title { font-size:0.78rem; font-weight:600; color:var(--muted); margin-top:0.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
       .cw-card:hover .cw-title { color:#fff; }
     </style>
