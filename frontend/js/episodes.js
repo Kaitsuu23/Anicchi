@@ -212,9 +212,6 @@ async function loadEpisode() {
       const filled = Math.round(pct / 5);
       const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
       console.log(`%c[history] ${String(Math.floor(progress/60)).padStart(2,'0')}:${String(progress%60).padStart(2,'0')} ${bar} ${pct}% (${progress}s)`, 'color:#a855f7;font-family:monospace');
-      // Update last saved pct untuk log
-      const vEl = document.getElementById('ep-video');
-      if (vEl) vEl._lastSavedPct = (progress / duration) * 100;
       saveWatchHistory({
         video_slug: epSlug,
         video_title: d.title,
@@ -351,9 +348,9 @@ function initPlayer() {
     const sec = Math.floor(video.currentTime);
     if (sec !== (video._lastLogSec ?? -1)) {
       video._lastLogSec = sec;
-      if (!video._lastSavedPct) video._lastSavedPct = 0;
-      const diff = (pct - video._lastSavedPct).toFixed(1);
-      console.log(`%c🎬 Progress: ${pct.toFixed(1)}%, Last saved: ${video._lastSavedPct.toFixed(1)}%, Diff: ${diff}%`, 'color:#a855f7;font-family:monospace');
+      const filled = Math.round(pct / 5);
+      const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
+      console.log(`%c[progress] ${fmt(video.currentTime)} ${bar} ${Math.round(pct)}%`, 'color:#a855f7;font-family:monospace');
     }
   });
 
