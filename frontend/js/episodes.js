@@ -599,14 +599,17 @@ async function saveWatchHistory(data) {
 
 async function resumeProgress(slug) {
   const token = localStorage.getItem('ez_token');
-  if (!token) return;
+  if (!token) { console.log('[resume] no token, skip'); return; }
+  console.log('[resume] fetching history for slug:', slug);
   try {
     const res = await fetch(`/api/auth?action=history&limit=50`, {
       headers: { Authorization: `Bearer ${token}` }
     });
     const json = await res.json();
+    console.log('[resume] history response:', json.success, 'items:', json.data?.length);
     if (!json.success) return;
     const item = json.data.find(h => h.video_slug === slug);
+    console.log('[resume] found item:', item ? `progress=${item.watch_progress}s` : 'NOT FOUND');
     if (!item || !item.watch_progress || item.watch_progress < 10) return;
 
     const progress = item.watch_progress;
