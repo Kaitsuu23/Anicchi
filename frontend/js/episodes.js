@@ -140,6 +140,10 @@ async function loadEpisode() {
               </div>
               <div class="ep-meta-body">
                 <h2 class="ep-meta-title">${d.title}</h2>
+                <button id="fav-btn" onclick="toggleFavEp()" style="display:inline-flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.75rem;padding:0.45rem 1rem;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;color:var(--muted);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.3s">
+                  <svg id="fav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+                  <span id="fav-text">Favorite</span>
+                </button>
                 ${(d.rating || d.votes) ? `
                 <div class="ep-meta-rating">
                   <span class="ep-meta-score">${d.rating || '—'}</span>
@@ -213,6 +217,8 @@ async function loadEpisode() {
 
     // Resume dari progress terakhir
     resumeProgress(epSlug);
+    // Init favorite
+    setTimeout(() => initFavEp(d.title, d.seriesCover || d.thumbnail || ''), 100);
 
     // Update progress setiap 15 detik saat nonton
     const _progressInterval = setInterval(() => {
@@ -659,4 +665,54 @@ function showResumeToast(seconds) {
   const m = Math.floor(seconds / 60);
   const s = seconds % 60;
   showToast(`▶ Lanjut dari ${m}:${String(s).padStart(2,'0')}`);
+}
+
+// ── Favorites (episode page) ──────────────────────────────────
+let _epFavSlug = epSlug;
+let _epFavTitle = '';
+let _epFavCover = '';
+let _epIsFav = false;
+
+async function initFavEp(title, cover) {
+  _epFavTitle = title;
+  _epFavCover = cover;
+  const token = localStorage.getItem('ez_token');
+  if (!token) return;
+  const res = await fetch(`/api/auth?action=favorites-check&slug=${encodeURIComponent(_epFavSlug)}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const json = await res.json();
+  if (json.success) { _epIsFav = json.favorited; updateFavEpBtn(); }
+}
+
+function updateFavEpBtn() {
+  const btn = document.getElementById('fav-btn');
+  const icon = document.getElementById('fav-icon');
+  const text = document.getElementById('fav-text');
+  if (!btn) return;
+  if (_epIsFav) {
+    btn.style.borderColor = 'rgba(239,68,68,0.4)';
+    btn.style.color = '#f87171';
+    icon.setAttribute('fill', '#f87171');
+    icon.setAttribute('stroke', 'none');
+    text.textContent = 'Favorited';
+  } else {
+    btn.style.borderColor = 'var(--glass-border)';
+    btn.style.color = 'var(--muted)';
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    text.textContent = 'Favorite';
+  }
+}
+
+async function toggleFavEp() {
+  const token = localStorage.getItem('ez_token');
+  if (!token) { location.href = '/login?redirect=' + location.pathname; return; }
+  const res = await fetch('/api/auth?action=favorites', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ video_slug: _epFavSlug, video_title: _epFavTitle, video_cover_url: _epFavCover, video_type: 'episode' }),
+  });
+  const json = await res.json();
+  if (json.success) { _epIsFav = json.favorited; updateFavEpBtn(); }
 }

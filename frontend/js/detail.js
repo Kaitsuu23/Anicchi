@@ -38,6 +38,8 @@ async function loadDetail() {
     document.title = `${d.title} – EcchiZone`;
     const navSub = document.querySelector('.nav-subtitle');
     if (navSub) navSub.textContent = d.title;
+    // Init favorite setelah data tersedia
+    setTimeout(() => initFavorite(d.title, d.thumbnail), 100);
 
     const genres = (d.genres || []).map(g =>
       `<a class="ep-meta-tag" href="/genre/${g.slug}/">${g.name}</a>`
@@ -86,6 +88,10 @@ async function loadDetail() {
           <h1 class="dt-title">${d.title}</h1>
           ${d.originalTitle ? `<div class="dt-original">${d.originalTitle}</div>` : ''}
           ${genres ? `<div class="dt-genres">${genres}</div>` : ''}
+          <button id="fav-btn" onclick="toggleFavorite()" style="display:inline-flex;align-items:center;gap:0.5rem;margin:0.75rem 0;padding:0.55rem 1.25rem;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:10px;color:var(--muted);font-size:0.88rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.3s">
+            <svg id="fav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
+            <span id="fav-text">Add to Favorites</span>
+          </button>
           ${d.description ? `<p class="dt-desc">${d.description}</p>` : ''}
 
           ${epList ? `
@@ -109,3 +115,53 @@ function renderStars(score) {
 }
 
 loadDetail();
+
+// ── Favorites ─────────────────────────────────────────────────
+let _favSlug = slug;
+let _favTitle = '';
+let _favCover = '';
+let _isFav = false;
+
+async function initFavorite(title, cover) {
+  _favTitle = title;
+  _favCover = cover;
+  const token = localStorage.getItem('ez_token');
+  if (!token) return;
+  const res = await fetch(`/api/auth?action=favorites-check&slug=${encodeURIComponent(_favSlug)}`, {
+    headers: { Authorization: `Bearer ${token}` }
+  });
+  const json = await res.json();
+  if (json.success) { _isFav = json.favorited; updateFavBtn(); }
+}
+
+function updateFavBtn() {
+  const btn = document.getElementById('fav-btn');
+  const icon = document.getElementById('fav-icon');
+  const text = document.getElementById('fav-text');
+  if (!btn) return;
+  if (_isFav) {
+    btn.style.borderColor = 'rgba(239,68,68,0.4)';
+    btn.style.color = '#f87171';
+    icon.setAttribute('fill', '#f87171');
+    icon.setAttribute('stroke', 'none');
+    text.textContent = 'Remove Favorite';
+  } else {
+    btn.style.borderColor = 'var(--glass-border)';
+    btn.style.color = 'var(--muted)';
+    icon.setAttribute('fill', 'none');
+    icon.setAttribute('stroke', 'currentColor');
+    text.textContent = 'Add to Favorites';
+  }
+}
+
+async function toggleFavorite() {
+  const token = localStorage.getItem('ez_token');
+  if (!token) { location.href = '/login?redirect=' + location.pathname; return; }
+  const res = await fetch('/api/auth?action=favorites', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+    body: JSON.stringify({ video_slug: _favSlug, video_title: _favTitle, video_cover_url: _favCover, video_type: 'series' }),
+  });
+  const json = await res.json();
+  if (json.success) { _isFav = json.favorited; updateFavBtn(); }
+}

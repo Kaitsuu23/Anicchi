@@ -154,6 +154,39 @@ module.exports = async (req, res) => {
     return res.json({ success: true });
   }
 
+  // ── FAVORITES GET ─────────────────────────────────────────────
+  if (action === 'favorites' && req.method === 'GET') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { data } = await db.from('user_favorites').select('*').eq('user_id', user.id).order('created_at', { ascending: false });
+    return res.json({ success: true, data: data || [] });
+  }
+
+  // ── FAVORITES CHECK ───────────────────────────────────────────
+  if (action === 'favorites-check' && req.method === 'GET') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { slug } = req.query;
+    const { data } = await db.from('user_favorites').select('id').eq('user_id', user.id).eq('video_slug', slug).maybeSingle();
+    return res.json({ success: true, favorited: !!data });
+  }
+
+  // ── FAVORITES TOGGLE ──────────────────────────────────────────
+  if (action === 'favorites' && req.method === 'POST') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { video_slug, video_title, video_cover_url, video_type } = req.body || {};
+    if (!video_slug) return res.status(400).json({ success: false, message: 'video_slug required' });
+    // Cek sudah ada atau belum
+    const { data: existing } = await db.from('user_favorites').select('id').eq('user_id', user.id).eq('video_slug', video_slug).maybeSingle();
+    if (existing) {
+      await db.from('user_favorites').delete().eq('id', existing.id);
+      return res.json({ success: true, favorited: false });
+    }
+    await db.from('user_favorites').insert({ user_id: user.id, video_slug, video_title, video_cover_url, video_type: video_type || 'series' });
+    return res.json({ success: true, favorited: true });
+  }
+
   if (req.method !== 'POST')
     return res.status(405).json({ success: false, message: 'Method not allowed' });
 

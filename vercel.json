@@ -6,6 +6,7 @@
     "api/auth.js": { "maxDuration": 15 }
   },
   "redirects": [
+    { "source": "/favorites", "destination": "/favorites/", "permanent": false },
     { "source": "/login", "destination": "/login/", "permanent": false },
     { "source": "/register", "destination": "/register/", "permanent": false },
     { "source": "/history", "destination": "/history/", "permanent": false },
@@ -56,6 +57,7 @@
     { "source": "/register/", "destination": "/frontend/pages/register.html" },
     { "source": "/history/", "destination": "/frontend/pages/history.html" },
     { "source": "/profile/", "destination": "/frontend/pages/profile.html" },
+    { "source": "/favorites/", "destination": "/frontend/pages/favorites.html" },
     { "source": "/css/:path*", "destination": "/frontend/css/:path*" },
     { "source": "/js/:path*", "destination": "/frontend/js/:path*" },
     { "source": "/icon/:path*", "destination": "/frontend/icon/:path*" },
