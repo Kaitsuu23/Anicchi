@@ -190,14 +190,26 @@ async function loadEpisode() {
 
     // ── Watch History ─────────────────────────────────────────
     const seriesSlug = d.seriesLink ? urlToSlug(d.seriesLink) : null;
-    saveWatchHistory({
-      video_slug: epSlug,
-      video_title: d.title,
-      video_cover_url: d.seriesCover || d.thumbnail || null,
-      series_slug: seriesSlug,
-      series_title: d.seriesTitle || d.title,
-      watch_progress: 0,
-    });
+
+    // Jangan save progress 0 saat pertama load — hanya catat kalau belum ada history
+    const token = localStorage.getItem('ez_token');
+    if (token) {
+      fetch(`/api/auth?action=history&limit=50`, { headers: { Authorization: `Bearer ${token}` } })
+        .then(r => r.json())
+        .then(j => {
+          const exists = j.success && j.data.find(h => h.video_slug === epSlug);
+          if (!exists) {
+            saveWatchHistory({
+              video_slug: epSlug,
+              video_title: d.title,
+              video_cover_url: d.seriesCover || d.thumbnail || null,
+              series_slug: seriesSlug,
+              series_title: d.seriesTitle || d.title,
+              watch_progress: 0,
+            });
+          }
+        }).catch(() => {});
+    }
 
     // Resume dari progress terakhir
     resumeProgress(epSlug);
