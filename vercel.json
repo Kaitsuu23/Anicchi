@@ -52,6 +52,8 @@
     { "source": "/register", "destination": "/frontend/pages/register.html" },
     { "source": "/history/", "destination": "/frontend/pages/history.html" },
     { "source": "/history", "destination": "/frontend/pages/history.html" },
+    { "source": "/profile/", "destination": "/frontend/pages/profile.html" },
+    { "source": "/profile", "destination": "/frontend/pages/profile.html" },
     { "source": "/css/:path*", "destination": "/frontend/css/:path*" },
     { "source": "/js/:path*", "destination": "/frontend/js/:path*" },
     { "source": "/icon/:path*", "destination": "/frontend/icon/:path*" },

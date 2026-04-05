@@ -134,6 +134,7 @@ async function renderAuthNav(container) {
       <div class="dropdown-menu" id="user-menu">
         <span class="dropdown-item" style="color:var(--muted);font-size:0.8rem">${user.email}</span>
         <div class="dropdown-divider"></div>
+        <a class="dropdown-item" href="/profile">👤 Profile</a>
         <a class="dropdown-item" href="/history">📺 Watch History</a>
         <div class="dropdown-divider"></div>
         <button class="dropdown-item" onclick="signOut()" style="cursor:pointer;background:none;border:none;width:100%;text-align:left;color:inherit">🚪 Logout</button>

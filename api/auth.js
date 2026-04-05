@@ -28,6 +28,57 @@ module.exports = async (req, res) => {
     return res.json({ success: true, user });
   }
 
+  // ── PROFILE GET ──────────────────────────────────────────────
+  if (action === 'profile' && req.method === 'GET') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { data, error } = await db.from('users')
+      .select('id, username, email, avatar_url, role, created_at')
+      .eq('id', user.id).single();
+    if (error) return res.status(500).json({ success: false, message: error.message });
+    // Stats
+    const [{ count: histCount }, { count: favCount }] = await Promise.all([
+      db.from('user_watch_history').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+      db.from('user_favorites').select('*', { count: 'exact', head: true }).eq('user_id', user.id),
+    ]);
+    return res.json({ success: true, data: { ...data, stats: { watched: histCount || 0, favorites: favCount || 0 } } });
+  }
+
+  // ── PROFILE UPDATE ───────────────────────────────────────────
+  if (action === 'profile' && req.method === 'POST') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    const { username, avatar_url, current_password, new_password } = req.body || {};
+    const updates = {};
+
+    if (username) {
+      if (username.length < 3 || username.length > 50)
+        return res.status(400).json({ success: false, message: 'Username harus 3-50 karakter.' });
+      // Cek duplikat
+      const { data: existing } = await db.from('users').select('id').eq('username', username).neq('id', user.id).maybeSingle();
+      if (existing) return res.status(409).json({ success: false, message: 'Username sudah digunakan.' });
+      updates.username = username;
+    }
+    if (avatar_url !== undefined) updates.avatar_url = avatar_url;
+
+    // Ganti password
+    if (new_password) {
+      if (!current_password) return res.status(400).json({ success: false, message: 'Password lama wajib diisi.' });
+      if (new_password.length < 6) return res.status(400).json({ success: false, message: 'Password baru minimal 6 karakter.' });
+      const { data: u } = await db.from('users').select('password_hash').eq('id', user.id).single();
+      const valid = await bcrypt.compare(current_password, u.password_hash);
+      if (!valid) return res.status(401).json({ success: false, message: 'Password lama salah.' });
+      updates.password_hash = await bcrypt.hash(new_password, 12);
+    }
+
+    if (!Object.keys(updates).length)
+      return res.status(400).json({ success: false, message: 'Tidak ada yang diubah.' });
+
+    const { error } = await db.from('users').update(updates).eq('id', user.id);
+    if (error) return res.status(500).json({ success: false, message: error.message });
+    return res.json({ success: true, message: 'Profil berhasil diperbarui.' });
+  }
+
   // ── HISTORY GET ──────────────────────────────────────────────
   if (action === 'history' && req.method === 'GET') {
     const user = verifyToken(req);
