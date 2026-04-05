@@ -606,20 +606,22 @@ async function resumeProgress(slug) {
     let attempts = 0;
     const poll = setInterval(() => {
       attempts++;
-      if (attempts > 30) { clearInterval(poll); return; } // timeout 15s
+      if (attempts > 30) { clearInterval(poll); console.log('[resume] timeout - video element not found'); return; }
 
       const v = document.getElementById('ep-video');
-      if (!v) return; // belum ada, coba lagi
+      console.log(`[resume] attempt ${attempts}, video:`, v ? `readyState=${v.readyState} duration=${v.duration}` : 'not found');
+      if (!v) return;
 
       if (v.readyState >= 1 && v.duration) {
         clearInterval(poll);
+        console.log(`[resume] seeking to ${progress}s, duration=${v.duration}`);
         if (progress / v.duration > 0.95) return;
         v.currentTime = progress;
         showResumeToast(progress);
       } else {
-        // Pasang listener sekali, tapi tetap poll sebagai fallback
         v.addEventListener('loadedmetadata', () => {
           clearInterval(poll);
+          console.log(`[resume] loadedmetadata, seeking to ${progress}s`);
           if (!v.duration || progress / v.duration > 0.95) return;
           v.currentTime = progress;
           showResumeToast(progress);
