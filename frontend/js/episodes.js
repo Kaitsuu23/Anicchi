@@ -200,8 +200,8 @@ async function loadEpisode() {
       video_duration: 0,
     });
 
-    // Resume dari progress terakhir
-    resumeProgress(epSlug);
+    // Resume SETELAH player benar-benar siap (delay lebih panjang)
+    setTimeout(() => resumeProgress(epSlug), 2000);
 
     // Update progress via timeupdate (per 1% perubahan, debounced 2s)
     let _lastSavedPct = 0;
@@ -238,15 +238,29 @@ async function loadEpisode() {
     setTimeout(() => {
       const v = document.getElementById('ep-video');
       if (v) v.addEventListener('timeupdate', _timeupdateHandler);
-    }, 1000);
+    }, 3000);
 
     // Panggil AJAX dari browser hanya jika server-side scraper tidak dapat playerSrcs
     if (!d.playerSrcs || d.playerSrcs.length === 0) {
       if (d.postId) {
-        loadPlayerViaAjax(d.postId, d.url || videoUrl);
+        loadPlayerViaAjax(d.postId, d.url || videoUrl).then(() => {
+          resumeProgress(epSlug);
+          setTimeout(() => {
+            const v = document.getElementById('ep-video');
+            if (v) v.addEventListener('timeupdate', _timeupdateHandler);
+          }, 500);
+        });
       } else {
         showPlayerError();
+        setTimeout(() => resumeProgress(epSlug), 2000);
       }
+    } else {
+      // playerSrcs sudah ada, resume setelah player init
+      setTimeout(() => {
+        resumeProgress(epSlug);
+        const v = document.getElementById('ep-video');
+        if (v) v.addEventListener('timeupdate', _timeupdateHandler);
+      }, 2000);
     }
   } catch (err) {
     content.innerHTML = `<div class="error-msg"><span>⚠️</span>${err.message}</div>`;
