@@ -211,6 +211,41 @@
     </div>
   </main>
 
+  <!-- Modal Delete Account -->
+  <div id="delete-modal" style="display:none;position:fixed;inset:0;z-index:1000;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:1rem">
+    <div style="background:#0d0d12;border:1px solid rgba(239,68,68,0.3);border-radius:20px;padding:2rem;max-width:440px;width:100%;position:relative;box-shadow:0 20px 60px rgba(0,0,0,0.8)">
+      <div style="text-align:center;margin-bottom:1.5rem">
+        <div style="width:56px;height:56px;border-radius:50%;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);display:flex;align-items:center;justify-content:center;margin:0 auto 1rem">
+          <svg width="24" height="24" viewBox="0 0 24 24" fill="#f87171"><path d="M6 19c0 1.1.9 2 2 2h8c1.1 0 2-.9 2-2V7H6v12zM19 4h-3.5l-1-1h-5l-1 1H5v2h14V4z"/></svg>
+        </div>
+        <div style="font-size:1.2rem;font-weight:800;color:#fff;margin-bottom:0.5rem">Hapus Akun</div>
+        <div style="font-size:0.88rem;color:var(--muted);line-height:1.6">
+          Tindakan ini <strong style="color:#f87171">tidak dapat dibatalkan</strong>. Semua data kamu akan dihapus permanen.
+        </div>
+      </div>
+
+      <div id="delete-modal-error" style="display:none;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.3);border-radius:8px;padding:0.75rem 1rem;font-size:0.85rem;color:#f87171;margin-bottom:1rem"></div>
+
+      <div style="display:flex;flex-direction:column;gap:0.75rem;margin-bottom:1.5rem">
+        <div>
+          <label style="font-size:0.78rem;font-weight:700;color:var(--muted);text-transform:uppercase;letter-spacing:0.05em;display:block;margin-bottom:0.4rem">Ketik email kamu untuk konfirmasi</label>
+          <input id="delete-email-input" type="email" placeholder="email@kamu.com"
+            style="width:100%;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:10px;color:#fff;font-size:0.95rem;font-family:'Inter',sans-serif;padding:0.65rem 1rem;outline:none;box-sizing:border-box;transition:border-color 0.3s"
+            onfocus="this.style.borderColor='var(--accent)'" onblur="this.style.borderColor='var(--glass-border)'" />
+        </div>
+        <div style="display:flex;align-items:flex-start;gap:0.75rem;background:rgba(255,255,255,0.03);border:1px solid var(--glass-border);border-radius:10px;padding:0.85rem;cursor:pointer" onclick="toggleDeleteConfirm()">
+          <div id="delete-checkbox" style="width:18px;height:18px;border-radius:4px;border:2px solid var(--glass-border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.2s"></div>
+          <div style="font-size:0.85rem;color:var(--muted);line-height:1.5">Saya mengerti bahwa akun dan semua data saya akan dihapus secara permanen dan tidak dapat dipulihkan.</div>
+        </div>
+      </div>
+
+      <div style="display:flex;gap:0.75rem">
+        <button onclick="closeDeleteModal()" style="flex:1;padding:0.75rem;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:10px;color:var(--muted);font-size:0.9rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s" onmouseover="this.style.color='#fff'" onmouseout="this.style.color='var(--muted)'">Batal</button>
+        <button id="delete-confirm-btn" onclick="submitDeleteAccount()" style="flex:1;padding:0.75rem;background:rgba(239,68,68,0.15);border:1px solid rgba(239,68,68,0.4);border-radius:10px;color:#f87171;font-size:0.9rem;font-weight:700;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.2s" onmouseover="this.style.background='rgba(239,68,68,0.25)'" onmouseout="this.style.background='rgba(239,68,68,0.15)'">Hapus Akun</button>
+      </div>
+    </div>
+  </div>
+
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.min.js"></script>
   <script src="/js/auth.js"></script>
   <script src="/js/navbar.js"></script>
@@ -245,24 +280,78 @@
       }
     })();
 
-    function confirmDeleteAccount() {
-      const input = prompt('Ketik "HAPUS" untuk konfirmasi penghapusan akun:');
-      if (input !== 'HAPUS') { if (input !== null) alert('Konfirmasi tidak sesuai.'); return; }
-      deleteAccount();
+    let _deleteConfirmed = false;
+
+    window.confirmDeleteAccount = function() {
+      _deleteConfirmed = false;
+      document.getElementById('delete-email-input').value = '';
+      document.getElementById('delete-modal-error').style.display = 'none';
+      document.getElementById('delete-checkbox').style.background = '';
+      document.getElementById('delete-checkbox').style.borderColor = 'var(--glass-border)';
+      document.getElementById('delete-checkbox').innerHTML = '';
+      const modal = document.getElementById('delete-modal');
+      modal.style.display = 'flex';
     }
 
-    async function deleteAccount() {
+    window.closeDeleteModal = function() {
+      document.getElementById('delete-modal').style.display = 'none';
+    }
+
+    window.toggleDeleteConfirm = function() {
+      _deleteConfirmed = !_deleteConfirmed;
+      const cb = document.getElementById('delete-checkbox');
+      if (_deleteConfirmed) {
+        cb.style.background = 'var(--accent)';
+        cb.style.borderColor = 'var(--accent)';
+        cb.innerHTML = `<svg width="12" height="12" viewBox="0 0 24 24" fill="#fff"><path d="M9 16.17L4.83 12l-1.42 1.41L9 19 21 7l-1.41-1.41z"/></svg>`;
+      } else {
+        cb.style.background = '';
+        cb.style.borderColor = 'var(--glass-border)';
+        cb.innerHTML = '';
+      }
+    }
+
+    window.submitDeleteAccount = async function() {
+      const errEl = document.getElementById('delete-modal-error');
+      errEl.style.display = 'none';
+
+      const emailInput = document.getElementById('delete-email-input').value.trim();
+      const userEmail = document.getElementById('display-email').textContent;
+
+      if (!emailInput) { errEl.textContent = 'Masukkan email kamu.'; errEl.style.display = 'block'; return; }
+      if (emailInput !== userEmail) { errEl.textContent = 'Email tidak sesuai.'; errEl.style.display = 'block'; return; }
+      if (!_deleteConfirmed) { errEl.textContent = 'Centang persetujuan terlebih dahulu.'; errEl.style.display = 'block'; return; }
+
+      const btn = document.getElementById('delete-confirm-btn');
+      btn.disabled = true; btn.textContent = 'Menghapus...';
+
+      await window.deleteAccount();
+      btn.disabled = false; btn.textContent = 'Hapus Akun';
+    }
+
+    // Tutup modal kalau klik backdrop
+    document.getElementById('delete-modal').addEventListener('click', function(e) {
+      if (e.target === this) closeDeleteModal();
+    });
+
+    window.deleteAccount = async function() {
       const token = localStorage.getItem('ez_token');
       const res = await fetch('/api/auth?action=delete-account', {
         method: 'DELETE',
         headers: { Authorization: `Bearer ${token}` },
       });
       const json = await res.json();
-      if (!json.success) { alert('Gagal menghapus akun: ' + json.message); return; }
+      if (!json.success) {
+        const errEl = document.getElementById('delete-modal-error');
+        errEl.textContent = 'Gagal menghapus akun: ' + json.message;
+        errEl.style.display = 'block';
+        return;
+      }
       localStorage.removeItem('ez_token');
-      alert('Akun berhasil dihapus.');
       location.href = '/';
     }
+
+    window.switchAvatarTab = function(tab) {
       document.getElementById('tab-url').classList.toggle('active', tab === 'url');
       document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
       document.getElementById('avatar-url-section').style.display = tab === 'url' ? '' : 'none';
