@@ -602,25 +602,30 @@ async function resumeProgress(slug) {
 
     const progress = item.watch_progress;
 
-    // Tunggu video siap lalu seek
-    function trySeek() {
+    // Poll sampai video element ada dan siap, max 15 detik
+    let attempts = 0;
+    const poll = setInterval(() => {
+      attempts++;
+      if (attempts > 30) { clearInterval(poll); return; } // timeout 15s
+
       const v = document.getElementById('ep-video');
-      if (!v) return;
+      if (!v) return; // belum ada, coba lagi
+
       if (v.readyState >= 1 && v.duration) {
-        // Jangan resume kalau sudah hampir selesai (>95%)
+        clearInterval(poll);
         if (progress / v.duration > 0.95) return;
         v.currentTime = progress;
         showResumeToast(progress);
       } else {
+        // Pasang listener sekali, tapi tetap poll sebagai fallback
         v.addEventListener('loadedmetadata', () => {
-          if (progress / v.duration > 0.95) return;
+          clearInterval(poll);
+          if (!v.duration || progress / v.duration > 0.95) return;
           v.currentTime = progress;
           showResumeToast(progress);
         }, { once: true });
       }
-    }
-    // Tunggu player render dulu
-    setTimeout(trySeek, 500);
+    }, 500);
   } catch { /* silent */ }
 }
 
