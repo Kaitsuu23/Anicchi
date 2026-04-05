@@ -197,31 +197,48 @@ async function loadEpisode() {
       series_slug: seriesSlug,
       series_title: d.seriesTitle || d.title,
       watch_progress: 0,
+      video_duration: 0,
     });
 
     // Resume dari progress terakhir
     resumeProgress(epSlug);
 
-    // Update progress setiap 15 detik saat nonton
-    const _progressInterval = setInterval(() => {
+    // Update progress via timeupdate (per 1% perubahan, debounced 2s)
+    let _lastSavedPct = 0;
+    let _saveDebounce = null;
+    document.addEventListener('timeupdate', () => {}, true); // placeholder
+    const _timeupdateHandler = () => {
       const v = document.getElementById('ep-video');
       if (!v || !v.duration) return;
-      const progress = Math.floor(v.currentTime);
-      const duration = Math.floor(v.duration);
-      const pct = Math.round((progress / duration) * 100);
-      const filled = Math.round(pct / 5);
-      const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
-      console.log(`%c[history] ${String(Math.floor(progress/60)).padStart(2,'0')}:${String(progress%60).padStart(2,'0')} ${bar} ${pct}% (${progress}s)`, 'color:#a855f7;font-family:monospace');
-      saveWatchHistory({
-        video_slug: epSlug,
-        video_title: d.title,
-        video_cover_url: d.seriesCover || d.thumbnail || null,
-        series_slug: seriesSlug,
-        series_title: d.seriesTitle || d.title,
-        watch_progress: progress,
-        video_duration: duration,
-      });
-    }, 10000);
+      const pct = (v.currentTime / v.duration) * 100;
+      const diff = Math.abs(pct - _lastSavedPct);
+      if (diff > 1) {
+        clearTimeout(_saveDebounce);
+        _saveDebounce = setTimeout(() => {
+          const progress = Math.floor(v.currentTime);
+          const duration = Math.floor(v.duration);
+          const filled = Math.round(pct / 5);
+          const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
+          console.log(`%c🎬 Progress: ${pct.toFixed(1)}%, Last saved: ${_lastSavedPct.toFixed(1)}%, Diff: ${diff.toFixed(1)}%`, 'color:#a855f7;font-family:monospace');
+          console.log(`%c💾 Triggering save for ${Math.round(pct)}%`, 'color:#22c55e;font-family:monospace');
+          _lastSavedPct = pct;
+          saveWatchHistory({
+            video_slug: epSlug,
+            video_title: d.title,
+            video_cover_url: d.seriesCover || d.thumbnail || null,
+            series_slug: seriesSlug,
+            series_title: d.seriesTitle || d.title,
+            watch_progress: progress,
+            video_duration: duration,
+          });
+        }, 2000);
+      }
+    };
+    // Attach setelah player render
+    setTimeout(() => {
+      const v = document.getElementById('ep-video');
+      if (v) v.addEventListener('timeupdate', _timeupdateHandler);
+    }, 1000);
 
     // Panggil AJAX dari browser hanya jika server-side scraper tidak dapat playerSrcs
     if (!d.playerSrcs || d.playerSrcs.length === 0) {
@@ -343,7 +360,15 @@ function initPlayer() {
     progressFill.style.width = pct + '%';
     progressThumb.style.left = pct + '%';
     timeDisplay.textContent = `${fmt(video.currentTime)} / ${fmt(video.duration)}`;
-  });
+
+    // Log progress setiap detik
+    const sec = Math.floor(video.currentTime);
+    if (sec !== (video._lastLogSec ?? -1)) {
+      video._lastLogSec = sec;
+      if (!video._lastSavedPct) video._lastSavedPct = 0;
+      const diff = (pct - video._lastSavedPct).toFixed(1);
+      console.log(`%c🎬 Progress: ${pct.toFixed(1)}%, Last saved: ${video._lastSavedPct.toFixed(1)}%, Diff: ${diff}%`, 'color:#a855f7;font-family:monospace');
+    }  });
 
   const PLAY_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>`;
   const PAUSE_ICON = `<svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>`;
