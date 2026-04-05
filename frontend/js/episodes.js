@@ -67,49 +67,7 @@ async function loadEpisode() {
       const directSrc = firstPlayer.src;
       const initialPlayerContent = firstPlayer.type === 'iframe'
         ? `<iframe id="ep-iframe" src="${webSrc}" frameborder="0" allowfullscreen style="position:absolute;top:0;left:0;width:100%;height:100%;border:0"></iframe>`
-        : `<video id="ep-video" preload="metadata" style="width:100%;height:100%"
-            onerror="if(this.src!=='${directSrc}'){this.src='${directSrc}';this.load();}">
-            <source src="${webSrc}" type="video/mp4">
-          </video>
-          <div class="player-overlay" id="player-overlay">
-            <button class="play-big-btn" id="play-big-btn">
-              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-            </button>
-          </div>
-          <div class="player-controls" id="player-controls">
-            <div class="progress-bar-wrap" id="progress-wrap" onclick="seekVideo(event)">
-              <div class="progress-bar-bg"></div>
-              <div class="progress-bar-fill" id="progress-fill"></div>
-              <div class="progress-thumb" id="progress-thumb"></div>
-            </div>
-            <div class="controls-row">
-              <div class="controls-left">
-                <button class="ctrl-btn" onclick="togglePlay()" id="play-btn">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
-                </button>
-                <button class="ctrl-btn" onclick="skip(-10)" title="-10s">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/><text x="12" y="15" text-anchor="middle" font-size="6" fill="currentColor">10</text></svg>
-                </button>
-                <button class="ctrl-btn" onclick="skip(10)" title="+10s">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/><text x="12" y="15" text-anchor="middle" font-size="6" fill="currentColor">10</text></svg>
-                </button>
-                <div class="volume-wrap">
-                  <button class="ctrl-btn" onclick="toggleMute()" id="mute-btn">
-                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
-                  </button>
-                  <div class="volume-slider-wrap">
-                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.05" value="1" style="writing-mode:vertical-lr;direction:rtl" oninput="setVolume(this.value)">
-                  </div>
-                </div>
-                <span class="time-display" id="time-display">0:00 / 0:00</span>
-              </div>
-              <div class="controls-right">
-                <button class="ctrl-btn" onclick="toggleFullscreen()">
-                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
-                </button>
-              </div>
-            </div>
-          </div>`;
+        : renderMp4HTML(webSrc, directSrc);
 
       playerHtml = `
         <div class="ep-player-wrap" id="player-container" style="position:relative">
@@ -254,6 +212,52 @@ async function loadEpisode() {
   }
 }
 
+function renderMp4HTML(webSrc, directSrc) {
+  return `<video id="ep-video" preload="metadata" style="width:100%;height:100%"
+            onerror="if(this.src!=='${directSrc}'){this.src='${directSrc}';this.load();}">
+            <source src="${webSrc}" type="video/mp4">
+          </video>
+          <div class="player-overlay" id="player-overlay">
+            <button class="play-big-btn" id="play-big-btn">
+              <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+            </button>
+          </div>
+          <div class="player-controls" id="player-controls">
+            <div class="progress-bar-wrap" id="progress-wrap" onclick="seekVideo(event)">
+              <div class="progress-bar-bg"></div>
+              <div class="progress-bar-fill" id="progress-fill"></div>
+              <div class="progress-thumb" id="progress-thumb"></div>
+            </div>
+            <div class="controls-row">
+              <div class="controls-left">
+                <button class="ctrl-btn" onclick="togglePlay()" id="play-btn">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M8 5v14l11-7z"/></svg>
+                </button>
+                <button class="ctrl-btn" onclick="skip(-10)" title="-10s">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1L7 6l5 5V7c3.31 0 6 2.69 6 6s-2.69 6-6 6-6-2.69-6-6H4c0 4.42 3.58 8 8 8s8-3.58 8-8-3.58-8-8-8z"/><text x="12" y="15" text-anchor="middle" font-size="6" fill="currentColor">10</text></svg>
+                </button>
+                <button class="ctrl-btn" onclick="skip(10)" title="+10s">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M12 5V1l5 5-5 5V7c-3.31 0-6 2.69-6 6s2.69 6 6 6 6-2.69 6-6h2c0 4.42-3.58 8-8 8s-8-3.58-8-8 3.58-8 8-8z"/><text x="12" y="15" text-anchor="middle" font-size="6" fill="currentColor">10</text></svg>
+                </button>
+                <div class="volume-wrap">
+                  <button class="ctrl-btn" onclick="toggleMute()" id="mute-btn">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M3 9v6h4l5 5V4L7 9H3zm13.5 3c0-1.77-1.02-3.29-2.5-4.03v8.05c1.48-.73 2.5-2.25 2.5-4.02zM14 3.23v2.06c2.89.86 5 3.54 5 6.71s-2.11 5.85-5 6.71v2.06c4.01-.91 7-4.49 7-8.77s-2.99-7.86-7-8.77z"/></svg>
+                  </button>
+                  <div class="volume-slider-wrap">
+                    <input type="range" class="volume-slider" id="volume-slider" min="0" max="1" step="0.05" value="1" style="writing-mode:vertical-lr;direction:rtl" oninput="setVolume(this.value)">
+                  </div>
+                </div>
+                <span class="time-display" id="time-display">0:00 / 0:00</span>
+              </div>
+              <div class="controls-right">
+                <button class="ctrl-btn" onclick="toggleFullscreen()">
+                  <svg width="20" height="20" viewBox="0 0 24 24" fill="currentColor"><path d="M7 14H5v5h5v-2H7v-3zm-2-4h2V7h3V5H5v5zm12 7h-3v2h5v-5h-2v3zM14 5v2h3v3h2V5h-5z"/></svg>
+                </button>
+              </div>
+            </div>
+          </div>`;
+}
+
 function renderStars(score) {
   const filled = Math.round(score);
   return Array.from({ length: 10 }, (_, i) =>
@@ -275,10 +279,7 @@ function switchPlayer(src, type, btn) {
     if (video) {
       video.src = src; video.load(); video.play();
     } else {
-      container.innerHTML = `
-        <video id="ep-video" preload="metadata" autoplay style="width:100%;height:100%">
-          <source src="${src}" type="video/mp4">
-        </video>`;
+      container.innerHTML = renderMp4HTML(src, src);
       setTimeout(initPlayer, 50);
     }
   }
@@ -582,10 +583,8 @@ function renderPlayer(srcs) {
 
   const first = srcs[0];
   container.style.display = '';
-  container.innerHTML = `
-    <video id="ep-video" preload="metadata" autoplay style="width:100%;height:100%">
-      <source src="${first.src}" type="video/mp4">
-    </video>`;
+  container.style.display = '';
+  container.innerHTML = renderMp4HTML(first.src, first.src);
 
   // Update option buttons jika ada
   let optionsDiv = document.querySelector('.ep-options');
