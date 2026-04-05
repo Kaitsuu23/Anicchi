@@ -232,7 +232,7 @@ module.exports = async (req, res) => {
 
     const { data: user } = await db
       .from('users')
-      .select('id, username, email, password_hash, role, is_active')
+      .select('id, username, email, password_hash, role, avatar_url, is_active')
       .eq('email', email)
       .maybeSingle();
 
@@ -246,7 +246,7 @@ module.exports = async (req, res) => {
       return res.status(401).json({ success: false, message: 'Email atau password salah.' });
 
     const token = jwt.sign(
-      { id: user.id, username: user.username, email: user.email, role: user.role },
+      { id: user.id, username: user.username, email: user.email, role: user.role, avatar_url: user.avatar_url },
       JWT_SECRET,
       { expiresIn: '7d' }
     );
@@ -264,7 +264,7 @@ module.exports = async (req, res) => {
     return res.json({
       success: true,
       token,
-      user: { id: user.id, username: user.username, email: user.email, role: user.role },
+      user: { id: user.id, username: user.username, email: user.email, role: user.role, avatar_url: user.avatar_url },
     });
   }
 
