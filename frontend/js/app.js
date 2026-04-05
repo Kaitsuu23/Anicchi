@@ -168,9 +168,9 @@ function renderContinueWatching(items) {
       .cw-grid { display:flex; gap:1rem; overflow-x:auto; padding:0.5rem 0.5rem 1rem; scrollbar-width:thin; scrollbar-color:var(--accent) transparent; }
       .cw-grid::-webkit-scrollbar { height:4px; }
       .cw-grid::-webkit-scrollbar-thumb { background:var(--accent); border-radius:4px; }
-      .cw-card { flex:0 0 160px; text-decoration:none; color:inherit; transition:transform 0.3s ease; }
+      .cw-card { flex:0 0 160px; width:160px; text-decoration:none; color:inherit; transition:transform 0.3s ease; }
       .cw-card:hover { transform:translateY(-4px); }
-      .cw-thumb { position:relative; width:100%; aspect-ratio:16/9; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--glass-border); }
+      .cw-thumb { position:relative; width:160px; height:90px; border-radius:8px; overflow:hidden; background:#000; border:1px solid var(--glass-border); flex-shrink:0; }
       .cw-thumb img { width:100%; height:100%; object-fit:cover; object-position:top; transition:transform 0.4s ease; }
       .cw-card:hover .cw-thumb img { transform:scale(1.05); filter:brightness(0.7); }
       .cw-overlay { position:absolute; inset:0; display:flex; align-items:center; justify-content:center; opacity:0; transition:opacity 0.3s; }
