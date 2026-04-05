@@ -88,7 +88,7 @@ async function loadDetail() {
           <h1 class="dt-title">${d.title}</h1>
           ${d.originalTitle ? `<div class="dt-original">${d.originalTitle}</div>` : ''}
           ${genres ? `<div class="dt-genres">${genres}</div>` : ''}
-          <button id="fav-btn" onclick="toggleFavorite()" style="display:inline-flex;align-items:center;gap:0.5rem;margin:0.75rem 0;padding:0.55rem 1.25rem;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:10px;color:var(--muted);font-size:0.88rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.3s">
+          <button id="fav-btn" onclick="toggleFavorite()" style="display:inline-flex;align-items:center;gap:0.5rem;margin:0.75rem 0;padding:0.55rem 1.25rem;width:fit-content;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:10px;color:var(--muted);font-size:0.88rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.3s">
             <svg id="fav-icon" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
             <span id="fav-text">Add to Favorites</span>
           </button>

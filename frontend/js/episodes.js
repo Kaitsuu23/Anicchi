@@ -140,7 +140,7 @@ async function loadEpisode() {
               </div>
               <div class="ep-meta-body">
                 <h2 class="ep-meta-title">${d.title}</h2>
-                <button id="fav-btn" onclick="toggleFavEp()" style="display:inline-flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.75rem;padding:0.45rem 1rem;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;color:var(--muted);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.3s">
+                <button id="fav-btn" onclick="toggleFavEp()" style="display:inline-flex;align-items:center;gap:0.5rem;margin:0.5rem 0 0.75rem;padding:0.45rem 1rem;width:fit-content;background:rgba(255,255,255,0.05);border:1px solid var(--glass-border);border-radius:8px;color:var(--muted);font-size:0.82rem;font-weight:600;cursor:pointer;font-family:'Inter',sans-serif;transition:all 0.3s">
                   <svg id="fav-icon" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z"/></svg>
                   <span id="fav-text">Favorite</span>
                 </button>
