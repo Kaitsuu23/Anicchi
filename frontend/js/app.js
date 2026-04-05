@@ -1,6 +1,10 @@
 const API = '/api';
 const main = document.getElementById('main-content');
 
+// Selalu mulai dari atas saat load
+if ('scrollRestoration' in history) history.scrollRestoration = 'manual';
+window.scrollTo(0, 0);
+
 function skeletonGrid() {
   return `<div class="grid">${Array.from({ length: 6 }, () => `
     <div class="skeleton-card">
