@@ -207,6 +207,11 @@ async function loadEpisode() {
       const v = document.getElementById('ep-video');
       if (!v || !v.duration) return;
       const progress = Math.floor(v.currentTime);
+      const duration = Math.floor(v.duration);
+      const pct = Math.round((progress / duration) * 100);
+      const filled = Math.round(pct / 5);
+      const bar = '█'.repeat(filled) + '░'.repeat(20 - filled);
+      console.log(`%c[history] ${String(Math.floor(progress/60)).padStart(2,'0')}:${String(progress%60).padStart(2,'0')} ${bar} ${pct}% (${progress}s)`, 'color:#a855f7;font-family:monospace');
       saveWatchHistory({
         video_slug: epSlug,
         video_title: d.title,
@@ -214,8 +219,9 @@ async function loadEpisode() {
         series_slug: seriesSlug,
         series_title: d.seriesTitle || d.title,
         watch_progress: progress,
+        video_duration: duration,
       });
-    }, 15000);
+    }, 10000);
 
     // Panggil AJAX dari browser hanya jika server-side scraper tidak dapat playerSrcs
     if (!d.playerSrcs || d.playerSrcs.length === 0) {

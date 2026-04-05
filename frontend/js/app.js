@@ -139,9 +139,10 @@ async function loadHome() {
 function renderContinueWatching(items) {
   const cards = items.map(item => {
     const progress = item.watch_progress || 0;
+    const duration = item.video_duration || 1500;
     const href = `/episodes/${item.video_slug}/`;
     const cover = item.video_cover_url || 'https://placehold.co/320x180/0a0a0f/444?text=N/A';
-    const pct = Math.min(100, Math.round((progress / 1500) * 100));
+    const pct = Math.min(100, Math.round((progress / duration) * 100));
     const timeStr = progress > 0 ? `${Math.floor(progress/60)}:${String(progress%60).padStart(2,'0')}` : '';
     return `
       <a class="cw-card" href="${href}" title="${item.video_title || ''}">
@@ -176,8 +177,8 @@ function renderContinueWatching(items) {
       .cw-card:hover .cw-overlay { opacity:1; }
       .cw-play { width:48px; height:48px; border-radius:50%; background:rgba(255,255,255,0.15); backdrop-filter:blur(8px); border:1.5px solid rgba(255,255,255,0.4); display:flex; align-items:center; justify-content:center; color:#fff; box-shadow:0 4px 20px rgba(0,0,0,0.5); }
       .cw-time { position:absolute; bottom:28px; right:8px; font-size:0.7rem; font-weight:700; background:rgba(0,0,0,0.75); padding:2px 6px; border-radius:4px; color:#fff; }
-      .cw-progress { position:absolute; bottom:0; left:0; right:0; height:3px; background:rgba(255,255,255,0.15); }
-      .cw-progress-fill { height:100%; background:var(--accent); border-radius:2px; }
+      .cw-progress { position:absolute; bottom:0; left:0; right:0; height:4px; background:rgba(255,255,255,0.2); border-radius:0 0 8px 8px; }
+      .cw-progress-fill { height:100%; background:linear-gradient(90deg, var(--accent2), var(--accent)); border-radius:0 0 8px 8px; min-width:${pct > 0 ? '4px' : '0'}; box-shadow:0 0 6px var(--glow); transition:width 0.3s; }
       .cw-title { font-size:0.78rem; font-weight:600; color:var(--muted); margin-top:0.5rem; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
       .cw-card:hover .cw-title { color:#fff; }
     </style>

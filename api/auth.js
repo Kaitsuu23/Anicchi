@@ -47,7 +47,7 @@ module.exports = async (req, res) => {
   if (action === 'history' && req.method === 'POST') {
     const user = verifyToken(req);
     if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
-    const { video_slug, video_title, video_cover_url, series_slug, series_title, watch_progress } = req.body || {};
+    const { video_slug, video_title, video_cover_url, series_slug, series_title, watch_progress, video_duration } = req.body || {};
     if (!video_slug) return res.status(400).json({ success: false, message: 'video_slug required' });
     const { error } = await db.from('user_watch_history').upsert({
       user_id: user.id,
@@ -57,6 +57,7 @@ module.exports = async (req, res) => {
       series_slug: series_slug || null,
       series_title: series_title || null,
       watch_progress: watch_progress || 0,
+      video_duration: video_duration || null,
       last_watched: new Date().toISOString(),
     }, { onConflict: 'user_id,video_slug' });
     if (error) return res.status(500).json({ success: false, message: error.message });
