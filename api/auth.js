@@ -59,16 +59,23 @@ module.exports = async (req, res) => {
   if (action === 'profile' && req.method === 'POST') {
     const user = verifyToken(req);
     if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
-    const { username, avatar_url, current_password, new_password } = req.body || {};
+    const { username, email, avatar_url, current_password, new_password } = req.body || {};
     const updates = {};
 
     if (username) {
       if (username.length < 3 || username.length > 50)
         return res.status(400).json({ success: false, message: 'Username harus 3-50 karakter.' });
-      // Cek duplikat
       const { data: existing } = await db.from('users').select('id').eq('username', username).neq('id', user.id).maybeSingle();
       if (existing) return res.status(409).json({ success: false, message: 'Username sudah digunakan.' });
       updates.username = username;
+    }
+    if (email) {
+      const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+      if (!emailRegex.test(email))
+        return res.status(400).json({ success: false, message: 'Format email tidak valid.' });
+      const { data: existing } = await db.from('users').select('id').eq('email', email).neq('id', user.id).maybeSingle();
+      if (existing) return res.status(409).json({ success: false, message: 'Email sudah digunakan.' });
+      updates.email = email;
     }
     if (avatar_url !== undefined) updates.avatar_url = avatar_url;
 

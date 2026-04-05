@@ -11,11 +11,11 @@
   <link rel="manifest" href="/icon/site.webmanifest" />
   <link rel="stylesheet" href="/css/style.css" />
   <style>
-    .profile-wrap { max-width: 680px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
+    .profile-wrap { max-width: 780px; margin: 0 auto; display: flex; flex-direction: column; gap: 1.5rem; }
 
     .profile-card {
       background: var(--glass); border: 1px solid var(--glass-border);
-      border-radius: 20px; padding: 2rem;
+      border-radius: 20px; padding: 2.5rem;
       backdrop-filter: blur(24px); position: relative; overflow: hidden;
     }
     .profile-card::before {
@@ -23,38 +23,38 @@
       background: linear-gradient(90deg, transparent, rgba(255,255,255,0.2), transparent);
     }
 
-    .profile-header { display: flex; align-items: center; gap: 1.5rem; margin-bottom: 1.5rem; }
+    .profile-header { display: flex; align-items: center; gap: 2rem; margin-bottom: 2rem; }
     .profile-avatar {
-      width: 80px; height: 80px; border-radius: 50%;
+      width: 120px; height: 120px; border-radius: 50%;
       background: linear-gradient(135deg, var(--sub), var(--accent));
       display: flex; align-items: center; justify-content: center;
-      font-size: 2rem; font-weight: 800; color: #fff; flex-shrink: 0;
-      border: 2px solid var(--glass-border);
-      box-shadow: 0 0 20px var(--glow);
+      font-size: 3rem; font-weight: 800; color: #fff; flex-shrink: 0;
+      border: 3px solid var(--glass-border);
+      box-shadow: 0 0 30px var(--glow);
       cursor: pointer; position: relative; overflow: hidden;
     }
     .profile-avatar:hover::after {
       content: '📷'; position: absolute; inset: 0;
       background: rgba(0,0,0,0.6); display: flex; align-items: center; justify-content: center;
-      font-size: 1.5rem; border-radius: 50%;
+      font-size: 2rem; border-radius: 50%;
     }
     .profile-avatar img { width:100%; height:100%; border-radius:50%; object-fit:cover; }
-    .profile-name { font-size: 1.4rem; font-weight: 800; color: #fff; }
-    .profile-email { font-size: 0.85rem; color: var(--muted); margin-top: 2px; }
+    .profile-name { font-size: 1.8rem; font-weight: 800; color: #fff; }
+    .profile-email { font-size: 0.9rem; color: var(--muted); margin-top: 4px; }
     .profile-role {
-      display: inline-block; margin-top: 6px;
-      font-size: 0.7rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
-      padding: 2px 10px; border-radius: 999px;
+      display: inline-block; margin-top: 8px;
+      font-size: 0.72rem; font-weight: 700; letter-spacing: 0.08em; text-transform: uppercase;
+      padding: 3px 12px; border-radius: 999px;
       background: rgba(167,139,250,0.15); border: 1px solid rgba(167,139,250,0.3); color: var(--accent);
     }
 
-    .stats-row { display: flex; gap: 1rem; margin-bottom: 1.5rem; }
+    .stats-row { display: flex; gap: 1rem; margin-bottom: 2rem; }
     .stat-box {
       flex: 1; background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border);
-      border-radius: 12px; padding: 1rem; text-align: center;
+      border-radius: 14px; padding: 1.25rem; text-align: center;
     }
-    .stat-num { font-size: 1.6rem; font-weight: 800; color: var(--accent); }
-    .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 2px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
+    .stat-num { font-size: 2rem; font-weight: 800; color: var(--accent); }
+    .stat-label { font-size: 0.75rem; color: var(--muted); margin-top: 4px; font-weight: 600; text-transform: uppercase; letter-spacing: 0.05em; }
 
     .section-title-sm { font-size: 0.82rem; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: 0.08em; margin-bottom: 1rem; }
 
@@ -148,6 +148,10 @@
             <input class="form-input" type="text" id="input-username" placeholder="username baru" minlength="3" maxlength="50" />
           </div>
           <div class="form-group">
+            <label class="form-label">Email</label>
+            <input class="form-input" type="email" id="input-email" placeholder="email baru" />
+          </div>
+          <div class="form-group">
             <label class="form-label">Avatar</label>
             <div style="display:flex;gap:0.5rem;margin-bottom:0.5rem">
               <button type="button" class="avatar-tab active" id="tab-url" onclick="switchAvatarTab('url')">🔗 URL</button>
@@ -222,6 +226,7 @@
       document.getElementById('stat-watched').textContent = d.stats.watched;
       document.getElementById('stat-favorites').textContent = d.stats.favorites;
       document.getElementById('input-username').value = d.username;
+      document.getElementById('input-email').value = d.email;
       if (d.avatar_url) document.getElementById('input-avatar').value = d.avatar_url;
 
       // Avatar display
@@ -295,6 +300,20 @@
       el.innerHTML = `<img src="${url}" onerror="this.parentElement.textContent='${username[0]?.toUpperCase()}'" />`;
     }
 
+    function showMsg(el, msg, isSuccess = false) {
+      el.textContent = msg;
+      el.style.display = 'block';
+      el.style.opacity = '1';
+      clearTimeout(el._timer);
+      if (isSuccess) {
+        el._timer = setTimeout(() => {
+          el.style.transition = 'opacity 0.5s';
+          el.style.opacity = '0';
+          setTimeout(() => { el.style.display = 'none'; el.style.opacity = '1'; }, 500);
+        }, 3000);
+      }
+    }
+
     // Edit profile
     document.getElementById('edit-form').addEventListener('submit', async (e) => {
       e.preventDefault();
@@ -311,14 +330,15 @@
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
         body: JSON.stringify({
           username: document.getElementById('input-username').value.trim(),
+          email: document.getElementById('input-email').value.trim(),
           avatar_url: document.getElementById('input-avatar').value.trim() || null,
         }),
       });
       const json = await res.json();
       btn.disabled = false; btn.textContent = btn.dataset.label;
 
-      if (!json.success) { errEl.textContent = json.message; errEl.style.display = 'block'; return; }
-      okEl.textContent = json.message; okEl.style.display = 'block';
+      if (!json.success) { showMsg(errEl, json.message); return; }
+      showMsg(okEl, json.message, true);
       document.getElementById('display-username').textContent = document.getElementById('input-username').value.trim();
     });
 
@@ -348,8 +368,8 @@
       const json = await res.json();
       btn.disabled = false; btn.textContent = btn.dataset.label;
 
-      if (!json.success) { errEl.textContent = json.message; errEl.style.display='block'; return; }
-      okEl.textContent = json.message; okEl.style.display='block';
+      if (!json.success) { showMsg(errEl, json.message); return; }
+      showMsg(okEl, json.message, true);
       e.target.reset();
     });
   </script>
