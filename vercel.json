@@ -5,7 +5,73 @@
     "api/video.js": { "maxDuration": 60 },
     "api/auth.js": { "maxDuration": 15 }
   },
+  "redirects": [
+    { "source": "/login", "destination": "/login/", "permanent": false },
+    { "source": "/register", "destination": "/register/", "permanent": false },
+    { "source": "/history", "destination": "/history/", "permanent": false },
+    { "source": "/profile", "destination": "/profile/", "permanent": false }
+  ],
   "rewrites": [
+    { "source": "/api/studios-years", "destination": "/api/genres?studios=1" },
+    { "source": "/api/image", "destination": "/api/image" },
+    { "source": "/api/auth", "destination": "/api/auth" },
+    { "source": "/api/release/:year", "destination": "/api/release?year=:year" },
+    { "source": "/api/studio/:slug", "destination": "/api/studio?slug=:slug" },
+    { "source": "/api/:path*", "destination": "/api/:path*" },
+    { "source": "/detail/:slug/", "destination": "/frontend/pages/detail.html" },
+    { "source": "/detail/:slug", "destination": "/frontend/pages/detail.html" },
+    { "source": "/episodes/:slug/", "destination": "/frontend/pages/episodes.html" },
+    { "source": "/episodes/:slug", "destination": "/frontend/pages/episodes.html" },
+    { "source": "/genre/:slug/", "destination": "/frontend/pages/genre.html" },
+    { "source": "/genre/:slug", "destination": "/frontend/pages/genre.html" },
+    { "source": "/release/:year/", "destination": "/frontend/pages/release.html" },
+    { "source": "/release/:year", "destination": "/frontend/pages/release.html" },
+    { "source": "/studio/:slug/", "destination": "/frontend/pages/studio.html" },
+    { "source": "/studio/:slug", "destination": "/frontend/pages/studio.html" },
+    { "source": "/recent-episodes/", "destination": "/frontend/pages/recent-episodes.html" },
+    { "source": "/recent-episodes", "destination": "/frontend/pages/recent-episodes.html" },
+    { "source": "/recent-series/", "destination": "/frontend/pages/recent-series.html" },
+    { "source": "/recent-series", "destination": "/frontend/pages/recent-series.html" },
+    { "source": "/hentai-list/", "destination": "/frontend/pages/hentai-list.html" },
+    { "source": "/hentai-list", "destination": "/frontend/pages/hentai-list.html" },
+    { "source": "/genres/", "destination": "/frontend/pages/genres.html" },
+    { "source": "/genres", "destination": "/frontend/pages/genres.html" },
+    { "source": "/series/", "destination": "/frontend/pages/series.html" },
+    { "source": "/series", "destination": "/frontend/pages/series.html" },
+    { "source": "/monthly/", "destination": "/frontend/pages/monthly.html" },
+    { "source": "/monthly", "destination": "/frontend/pages/monthly.html" },
+    { "source": "/uncensored/", "destination": "/frontend/pages/uncensored.html" },
+    { "source": "/uncensored", "destination": "/frontend/pages/uncensored.html" },
+    { "source": "/search/:query/", "destination": "/frontend/pages/search.html" },
+    { "source": "/search/:query", "destination": "/frontend/pages/search.html" },
+    { "source": "/search/", "destination": "/frontend/pages/search.html" },
+    { "source": "/search", "destination": "/frontend/pages/search.html" },
+    { "source": "/threed/", "destination": "/frontend/pages/threed.html" },
+    { "source": "/threed", "destination": "/frontend/pages/threed.html" },
+    { "source": "/letter/", "destination": "/frontend/pages/letter.html" },
+    { "source": "/letter", "destination": "/frontend/pages/letter.html" },
+    { "source": "/letter/:slug/", "destination": "/frontend/pages/letter.html" },
+    { "source": "/letter/:slug", "destination": "/frontend/pages/letter.html" },
+    { "source": "/login/", "destination": "/frontend/pages/login.html" },
+    { "source": "/register/", "destination": "/frontend/pages/register.html" },
+    { "source": "/history/", "destination": "/frontend/pages/history.html" },
+    { "source": "/profile/", "destination": "/frontend/pages/profile.html" },
+    { "source": "/css/:path*", "destination": "/frontend/css/:path*" },
+    { "source": "/js/:path*", "destination": "/frontend/js/:path*" },
+    { "source": "/icon/:path*", "destination": "/frontend/icon/:path*" },
+    { "source": "/pages/:path*", "destination": "/frontend/pages/:path*" },
+    { "source": "/", "destination": "/frontend/index.html" }
+  ],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Access-Control-Allow-Origin", "value": "*" },
+        { "key": "Access-Control-Allow-Methods", "value": "GET,OPTIONS" }
+      ]
+    }
+  ]
+}
     { "source": "/api/studios-years", "destination": "/api/genres?studios=1" },
     { "source": "/api/image", "destination": "/api/image" },
     { "source": "/api/auth", "destination": "/api/auth" },
