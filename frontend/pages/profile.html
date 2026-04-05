@@ -198,7 +198,14 @@
         </form>
 
         <div class="divider"></div>
-        <button class="danger-btn" onclick="if(confirm('Yakin logout?')) signOut()">🚪 Logout</button>
+        <div class="section-title-sm" style="color:#f87171">Danger Zone</div>
+        <div style="background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:12px;padding:1.25rem;margin-bottom:1rem">
+          <div style="font-size:0.95rem;font-weight:700;color:#f87171;margin-bottom:0.4rem">🗑 Hapus Akun</div>
+          <div style="font-size:0.85rem;color:var(--muted);line-height:1.6">
+            Tindakan ini <strong style="color:#fff">tidak dapat dibatalkan</strong>. Semua data kamu termasuk watch history dan favorites akan dihapus permanen. Akun tidak bisa dipulihkan setelah dihapus.
+          </div>
+        </div>
+        <button class="danger-btn" onclick="confirmDeleteAccount()">🗑 Hapus Akun Saya</button>
       </div>
 
     </div>
@@ -238,7 +245,24 @@
       }
     })();
 
-    function switchAvatarTab(tab) {
+    function confirmDeleteAccount() {
+      const input = prompt('Ketik "HAPUS" untuk konfirmasi penghapusan akun:');
+      if (input !== 'HAPUS') { if (input !== null) alert('Konfirmasi tidak sesuai.'); return; }
+      deleteAccount();
+    }
+
+    async function deleteAccount() {
+      const token = localStorage.getItem('ez_token');
+      const res = await fetch('/api/auth?action=delete-account', {
+        method: 'DELETE',
+        headers: { Authorization: `Bearer ${token}` },
+      });
+      const json = await res.json();
+      if (!json.success) { alert('Gagal menghapus akun: ' + json.message); return; }
+      localStorage.removeItem('ez_token');
+      alert('Akun berhasil dihapus.');
+      location.href = '/';
+    }
       document.getElementById('tab-url').classList.toggle('active', tab === 'url');
       document.getElementById('tab-upload').classList.toggle('active', tab === 'upload');
       document.getElementById('avatar-url-section').style.display = tab === 'url' ? '' : 'none';

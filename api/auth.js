@@ -28,7 +28,18 @@ module.exports = async (req, res) => {
     return res.json({ success: true, user });
   }
 
-  // ── AVATAR UPLOAD URL ────────────────────────────────────────
+  // ── DELETE ACCOUNT ───────────────────────────────────────────
+  if (action === 'delete-account' && req.method === 'DELETE') {
+    const user = verifyToken(req);
+    if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
+    // Hapus semua data user (cascade via FK), lalu hapus user
+    await db.from('user_watch_history').delete().eq('user_id', user.id);
+    await db.from('user_favorites').delete().eq('user_id', user.id);
+    await db.from('user_sessions').delete().eq('user_id', user.id);
+    const { error } = await db.from('users').delete().eq('id', user.id);
+    if (error) return res.status(500).json({ success: false, message: error.message });
+    return res.json({ success: true });
+  }
   if (action === 'avatar-url' && req.method === 'GET') {
     const user = verifyToken(req);
     if (!user) return res.status(401).json({ success: false, message: 'Unauthorized' });
