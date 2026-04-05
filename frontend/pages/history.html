@@ -62,13 +62,15 @@
           const pct = Math.min(100, Math.round((progress / 1500) * 100));
           const timeStr = progress > 0 ? `${Math.floor(progress/60)}m ${progress%60}s` : '';
           const date = new Date(item.last_watched).toLocaleDateString('id-ID', { day:'numeric', month:'short', year:'numeric' });
+          const epMatch = item.video_title?.match(/Episode\s+\d+/i);
+          const epBadge = epMatch ? `<div class="badge-ep">${epMatch[0].toUpperCase()}</div>` : '';
           return `
             <div class="card" style="position:relative">
               <a href="/episodes/${item.video_slug}/" class="card" style="text-decoration:none;color:inherit">
                 <div class="card-poster">
                   <img class="card-thumb" src="${cover}" alt="${item.video_title || ''}" loading="lazy"
                     onerror="this.src='https://placehold.co/200x280/0a0a0f/444?text=N/A'" />
-                  <div class="card-series-overlay">${item.series_title || item.video_title || ''}</div>
+                  ${epBadge}
                   <div style="position:absolute;bottom:0;left:0;right:0;height:3px;background:rgba(255,255,255,0.1)">
                     <div style="height:100%;background:var(--accent);width:${pct}%;border-radius:2px"></div>
                   </div>
