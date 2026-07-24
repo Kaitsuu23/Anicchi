@@ -5,6 +5,9 @@ const agent = new https.Agent({ rejectUnauthorized: false });
 const ALLOWED = [
   'cdn.hentaimama.io', 'hentaimama.io', 'gdvid.info',
   'na-01.javprovider.com', 'javprovider.com',
+  // Add more javprovider subdomains if needed
+  'na-02.javprovider.com', 'na-03.javprovider.com',
+  'eu-01.javprovider.com', 'eu-02.javprovider.com',
 ];
 
 const PROXY_BASE = process.env.VERCEL_URL
