@@ -10,7 +10,7 @@ const ALLOWED = [
 const PROXY_BASE = process.env.VERCEL_URL
   ? `https://${process.env.VERCEL_URL}/api/video`
   : '/api/video';
-
+  
 function isAllowedHost(hostname) {
   return ALLOWED.some(h => hostname === h || hostname.endsWith('.' + h));
 }
