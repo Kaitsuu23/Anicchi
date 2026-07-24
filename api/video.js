@@ -65,28 +65,42 @@ module.exports = async (req, res) => {
         responseType: 'text',
       });
 
-      let playlist = upstream.data;
+      let playlist = String(upstream.data);
+      
+      // Validate it's actually an M3U8 file
+      if (!playlist.trim().startsWith('#EXTM3U')) {
+        // Not a valid playlist — might be error HTML, pass through as-is or fail
+        return res.status(502).send('Invalid M3U8: does not start with #EXTM3U');
+      }
+
       // Determine base URL for resolving relative segment paths
       const baseUrl = url.substring(0, url.lastIndexOf('/') + 1);
 
-      // Rewrite every URI in the playlist to go through this proxy
-      playlist = playlist.replace(/^((?!#)([^\r\n]+))$/gm, (line) => {
+      // Split by lines, rewrite non-comment lines
+      const lines = playlist.split(/\r?\n/);
+      const rewritten = lines.map(line => {
         const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) return line;
-        // Resolve relative URLs
+        // Skip empty lines and comments
+        if (!trimmed || trimmed.startsWith('#')) {
+          // But check for URI= inside comments (e.g., #EXT-X-KEY:URI="...")
+          if (trimmed.includes('URI=')) {
+            return line.replace(/URI="([^"]+)"/g, (_, uri) => {
+              const absUrl = uri.startsWith('http') ? uri : baseUrl + uri;
+              return `URI="${PROXY_BASE}?url=${encodeURIComponent(absUrl)}"`;
+            });
+          }
+          return line;
+        }
+        // Non-comment line = segment/playlist URI
         const absUrl = trimmed.startsWith('http') ? trimmed : baseUrl + trimmed;
         return `${PROXY_BASE}?url=${encodeURIComponent(absUrl)}`;
       });
 
-      // Also rewrite URIs inside #EXT-X-MAP, #EXT-X-KEY, etc.
-      playlist = playlist.replace(/URI="([^"]+)"/g, (_, uri) => {
-        const absUrl = uri.startsWith('http') ? uri : baseUrl + uri;
-        return `URI="${PROXY_BASE}?url=${encodeURIComponent(absUrl)}"`;
-      });
+      const rewrittenPlaylist = rewritten.join('\n');
 
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
       res.setHeader('Cache-Control', 'no-cache');
-      return res.status(200).send(playlist);
+      return res.status(200).send(rewrittenPlaylist);
     } catch (err) {
       return res.status(502).json({ error: 'HLS proxy error: ' + err.message });
     }
