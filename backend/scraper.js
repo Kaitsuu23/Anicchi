@@ -913,7 +913,10 @@ async function scrapeDetail(url) {
   });
 
   const thumbnail =
-    $('meta[property="og:image"]').attr('content') || '';
+    $('.dsc-poster img').attr('src') ||
+    $('.dsc-poster').css('background-image')?.replace(/url\(['"]?([^'"]+)['"]?\)/, '$1') ||
+    $('meta[property="og:image"]').attr('content') ||
+    '';
 
   const description = $('.dsc-desc').first().text().trim() || '';
 
