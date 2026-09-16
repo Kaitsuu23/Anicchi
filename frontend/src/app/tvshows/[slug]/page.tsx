@@ -11,7 +11,7 @@ async function getDetail(slug: string) {
   const url = `https://hentaimama.io/tvshows/${slug}/`;
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/detail?url=${encodeURIComponent(url)}`, {
-      next: { revalidate: 3600 },
+      next: { revalidate: 0 },
     });
     if (!res.ok) return null;
     const json = await res.json();
