@@ -18,6 +18,31 @@ const scraperLimiter = rateLimit({
 app.use(cors());
 app.use(express.json());
 
+// Root endpoint
+app.get('/', (req, res) => {
+  res.json({
+    success: true,
+    api: 'EcchiZone API',
+    version: '1.0.0',
+    status: 'Running',
+    endpoints: {
+      home: '/api/home',
+      monthly: '/api/monthly',
+      recent_episodes: '/api/recent-episodes',
+      search: '/api/search',
+      episode: '/api/episode',
+      detail: '/api/detail',
+      genres: '/api/genres',
+      list: '/api/list',
+      series: '/api/list (with filter)',
+      studio: '/api/studio/:slug',
+      releases: '/api/releases/:year',
+      video: '/api/video'
+    },
+    documentation: 'https://github.com/Kaitsuu23/EcchiZone'
+  });
+});
+
 // API routes
 app.use('/api', scraperLimiter);
 app.use('/api', scraperRoutes);
