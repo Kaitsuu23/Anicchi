@@ -58,7 +58,7 @@ export default async function GenresPage() {
         {studios.length > 0 ? (
           <div className="flex flex-wrap gap-3 md:gap-4">
             {studios.map((s: any, idx: number) => {
-              const slug = extractSlug(s.url);
+              const slug = s.slug || extractSlug(s.url);
               return (
                 <Link
                   key={`studio-${idx}`}
