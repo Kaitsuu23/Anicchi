@@ -1,4 +1,4 @@
-const path = require('path');
+require('events').EventEmitter.defaultMaxListeners = 100;
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
@@ -21,49 +21,6 @@ app.use(express.json());
 // API routes
 app.use('/api', scraperLimiter);
 app.use('/api', scraperRoutes);
-
-const pages = [
-  'series', 'uncensored', 'hentai-list', 'threed', '3d',
-  'genres', 'genre', 'monthly', 'recent-series',
-  'recent-episodes', 'search', 'letter',
-  'login', 'register'
-];
-
-// Letter filter route
-app.get('/', (req, res) => {
-  if (req.query.letter || req.query.s) {
-    return res.sendFile(path.join(__dirname, '../frontend/pages/letter.html'));
-  }
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
-});
-
-// Clean URL routes — serve langsung dengan atau tanpa trailing slash
-pages.forEach(page => {
-  const file = page === '3d' ? 'threed' : page;
-  const handler = (req, res) => res.sendFile(path.join(__dirname, `../frontend/pages/${file}.html`));
-  app.get(`/${page}`, handler);
-  app.get(`/${page}/`, handler);
-});
-
-// Search clean URL: /search/query
-app.get('/search/:query', (req, res) => res.sendFile(path.join(__dirname, '../frontend/pages/search.html')));
-app.get('/search/:query/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/pages/search.html')));
-
-// Genre
-app.get('/genre/:slug/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/pages/genre.html')));
-app.get('/genre/:slug', (req, res) => res.redirect(`/genre/${req.params.slug}/`));
-
-// Detail & Episodes clean URL
-app.get('/detail/:slug/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/pages/detail.html')));
-app.get('/detail/:slug', (req, res) => res.redirect(`/detail/${req.params.slug}/`));
-app.get('/episodes/:slug/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/pages/episodes.html')));
-app.get('/episodes/:slug', (req, res) => res.redirect(`/episodes/${req.params.slug}/`));
-
-// Release & Studio
-app.get('/release/:year/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/pages/release.html')));
-app.get('/release/:year', (req, res) => res.redirect(`/release/${req.params.year}/`));
-app.get('/studio/:slug/', (req, res) => res.sendFile(path.join(__dirname, '../frontend/pages/studio.html')));
-app.get('/studio/:slug', (req, res) => res.redirect(`/studio/${req.params.slug}/`));
 
 // Proxy endpoint untuk bypass frame-ancestors CSP
 app.get('/proxy', async (req, res) => {
@@ -90,13 +47,120 @@ app.get('/proxy', async (req, res) => {
     res.status(500).send('Proxy error: ' + err.message);
   }
 });
-app.use(express.static(path.join(__dirname, '../frontend')));
 
-// Fallback
-app.get('*', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/index.html'));
+// Video proxy endpoint untuk stream video
+app.get('/api/video', async (req, res) => {
+  const { url } = req.query;
+  if (!url) {
+    return res.status(400).send('URL parameter is required');
+  }
+  
+  try {
+    const axios = require('axios');
+    const decodedUrl = decodeURIComponent(url);
+    
+    console.log(`[Video Proxy] Streaming: ${decodedUrl}`);
+    
+    // Detect domain untuk set referer yang tepat
+    let referer = 'https://hentaimama.io/';
+    if (decodedUrl.includes('hentaidoge.org')) {
+      referer = 'https://hentaidoge.org/';
+    } else if (decodedUrl.includes('gdvid.info')) {
+      referer = 'https://gdvid.info/';
+    } else if (decodedUrl.includes('javprovider.com')) {
+      referer = 'https://javprovider.com/';
+    }
+    
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/122.0.0.0 Safari/537.36',
+      'Referer': referer,
+      'Accept': '*/*',
+      'Accept-Encoding': 'identity',
+      'Connection': 'keep-alive',
+      'Origin': referer.replace(/\/$/, ''),
+      'Sec-Fetch-Dest': 'video',
+      'Sec-Fetch-Mode': 'cors',
+      'Sec-Fetch-Site': 'cross-site'
+    };
+
+    if (req.headers.range) {
+      headers['Range'] = req.headers.range;
+    }
+
+    // Retry logic untuk handle connection issues
+    let response;
+    let retries = 3;
+    
+    while (retries > 0) {
+      try {
+        response = await axios({
+          method: 'get',
+          url: decodedUrl,
+          responseType: 'stream',
+          timeout: 90000, // Increase timeout lebih banyak
+          maxRedirects: 10,
+          headers: headers
+        });
+        console.log(`[Video Proxy] Success after ${3 - retries} retries`);
+        break; // Success, exit retry loop
+      } catch (retryErr) {
+        retries--;
+        console.log(`[Video Proxy] Retry ${3 - retries} failed: ${retryErr.message}`);
+        if (retries === 0) throw retryErr;
+        await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s before retry
+      }
+    }
+    
+    // Forward content type dan headers penting
+    const contentType = response.headers['content-type'];
+    if (contentType) {
+      res.setHeader('Content-Type', contentType);
+    }
+    
+    // CORS headers
+    res.setHeader('Access-Control-Allow-Origin', '*');
+    res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS, HEAD');
+    res.setHeader('Access-Control-Allow-Headers', 'Range, Content-Type');
+    res.setHeader('Access-Control-Expose-Headers', 'Content-Length, Content-Range, Content-Type');
+
+    // Forward ALL relevant response headers from the target server (Content-Length, Content-Range, Accept-Ranges, etc.)
+    const headersToForward = ['content-length', 'content-range', 'accept-ranges', 'content-type'];
+    headersToForward.forEach(h => {
+      if (response.headers[h]) {
+        res.setHeader(h, response.headers[h]);
+      }
+    });
+
+    // Set HTTP status code matching the target server (e.g., 200 or 206)
+    res.status(response.status);
+
+    // Pipe the stream directly
+    response.data.pipe(res);
+    
+    // Handle stream errors
+    response.data.on('error', (err) => {
+      console.error('[Video Proxy] Stream error:', err.message);
+      if (!res.headersSent) {
+        res.status(500).send('Stream error: ' + err.message);
+      }
+    });
+    
+    response.data.on('close', () => {
+      console.log('[Video Proxy] Stream closed');
+    });
+    
+  } catch (err) {
+    console.error('[Video Proxy] Error:', err.message);
+    if (!res.headersSent) {
+      res.status(500).send('Video proxy error: ' + err.message);
+    }
+  }
 });
 
-app.listen(PORT, () => {
-  console.log(`Server berjalan di http://localhost:${PORT}`);
-});
+if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+  app.listen(PORT, () => {
+    console.log(`Server berjalan di http://localhost:${PORT}`);
+  });
+}
+
+module.exports = app;
