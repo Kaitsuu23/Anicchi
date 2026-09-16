@@ -1061,9 +1061,13 @@ async function scrapeGenres() {
     const value = $(el).attr('value');
     const name = $(el).text().trim();
     if (value && name) {
-      // Use the value directly as it's already in the correct format from hentaimama
-      // hentaimama already provides slugs like "lemon-heart" in the value attribute
-      studios.push({ name, slug: value, url: `https://hentaimama.io/studio/${value}/` });
+      // Normalize slug: lowercase and replace spaces with hyphens
+      const normalizedSlug = value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+      studios.push({ name, slug: normalizedSlug, url: `https://hentaimama.io/studio/${normalizedSlug}/` });
+    } else if (name) {
+      // Fallback: if value is empty, use normalized name as slug
+      const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
+      studios.push({ name, slug, url: `https://hentaimama.io/studio/${slug}/` });
     }
   });
   

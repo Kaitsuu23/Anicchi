@@ -163,11 +163,7 @@ async function getTopRated(tab, page) {
 }
 
 async function getGenres() {
-  const key = 'genres';
-  const cached = getCache(key);
-  if (cached) return cached;
   const data = await scrapeGenres();
-  setCache(key, data, 60 * 60 * 1000); // 1 jam
   return data;
 }
 

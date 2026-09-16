@@ -58,6 +58,7 @@ export default async function GenresPage() {
         {studios.length > 0 ? (
           <div className="flex flex-wrap gap-3 md:gap-4">
             {studios.map((s: any, idx: number) => {
+              // Use slug from backend response, fallback to extracting from URL
               const slug = s.slug || extractSlug(s.url);
               return (
                 <Link
