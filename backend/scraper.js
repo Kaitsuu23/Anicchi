@@ -1062,7 +1062,8 @@ async function scrapeGenres() {
     const name = $(el).text().trim();
     if (value && name) {
       // Use the value directly as it's already in the correct format from hentaimama
-      studios.push({ name, slug: value });
+      // hentaimama already provides slugs like "lemon-heart" in the value attribute
+      studios.push({ name, slug: value, url: `https://hentaimama.io/studio/${value}/` });
     }
   });
   
