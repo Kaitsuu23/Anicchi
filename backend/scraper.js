@@ -1017,7 +1017,9 @@ async function scrapeRelease(year, page, filter) {
 }
 
 async function scrapeStudio(slug, page, filter) {
-  const baseUrl = buildPagedUrl(`https://hentaimama.io/studio/${slug}/`, page);
+  // Convert slug to lowercase and replace spaces with hyphens
+  const normalizedSlug = slug.toLowerCase().replace(/\s+/g, '-');
+  const baseUrl = buildPagedUrl(`https://hentaimama.io/studio/${normalizedSlug}/`, page);
   const validFilters = ['recent', 'rating', 'alphabet', 'weekly', 'monthly', 'alltime'];
   let url = baseUrl;
   if (filter && validFilters.includes(filter) && filter !== 'alltime') {
@@ -1059,6 +1061,7 @@ async function scrapeGenres() {
     const value = $(el).attr('value');
     const name = $(el).text().trim();
     if (value && name) {
+      // Use the value directly as it's already in the correct format from hentaimama
       studios.push({ name, slug: value });
     }
   });
