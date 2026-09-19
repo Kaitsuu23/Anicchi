@@ -923,14 +923,15 @@ async function scrapeDetail(url) {
   const rating = $('.dt_rating_vgs').text().trim() || '';
 
   // Extract metadata from dsc-stats
-  let studio = '', aired = '', episodeCount = '';
+  let studio = '', studioSlug = '', aired = '', episodeCount = '';
   $('.dsc-stat').each((_, el) => {
     const $el = $(el);
     const label = $el.find('span').text().trim();
     const value = $el.find('b').text().trim();
-    
+
     if (label === 'Studio') {
       studio = $el.find('b a').text().trim() || value;
+      studioSlug = $el.find('b a').attr('href')?.split('/studio/')[1]?.replace(/\/$/, '') || '';
     } else if (label === 'Aired') {
       aired = value;
     } else if (label === 'Episodes') {
@@ -980,7 +981,7 @@ async function scrapeDetail(url) {
     if (link) related.push({ title, link, thumbnail, rating, year, episodes: epCount });
   });
 
-  return { title, altTitle, thumbnail, description, genres, rating, studio, aired, episodeCount, episodes, related };
+  return { title, altTitle, thumbnail, description, genres, rating, studio, studioSlug, aired, episodeCount, episodes, related };
 }
 
 async function scrapeTopRated(tab, page) {
@@ -1020,9 +1021,8 @@ async function scrapeRelease(year, page, filter) {
 }
 
 async function scrapeStudio(slug, page, filter) {
-  // Convert slug to lowercase and replace spaces with hyphens
-  const normalizedSlug = slug.toLowerCase().replace(/\s+/g, '-');
-  const baseUrl = buildPagedUrl(`https://hentaimama.io/studio/${normalizedSlug}/`, page);
+  // Use the slug as-is (it should already be the correct format from the API)
+  const baseUrl = buildPagedUrl(`https://hentaimama.io/studio/${slug}/`, page);
   const validFilters = ['recent', 'rating', 'alphabet', 'weekly', 'monthly', 'alltime'];
   let url = baseUrl;
   if (filter && validFilters.includes(filter) && filter !== 'alltime') {
