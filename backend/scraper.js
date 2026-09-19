@@ -1060,17 +1060,15 @@ async function scrapeGenres() {
   genres.sort((a, b) => a.name.localeCompare(b.name));
   
   const studios = [];
-  $('select[name="studios_filter[]"] option').each((i, el) => {
-    const value = $(el).attr('value');
+  // Extract studios from actual studio links on the page
+  $('a[href*="/studio/"]').each((i, el) => {
+    const href = $(el).attr('href') || '';
     const name = $(el).text().trim();
-    if (value && name) {
-      // Normalize slug: lowercase and replace spaces with hyphens
-      const normalizedSlug = value.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-      studios.push({ name, slug: normalizedSlug, url: `https://hentaimama.io/studio/${normalizedSlug}/` });
-    } else if (name) {
-      // Fallback: if value is empty, use normalized name as slug
-      const slug = name.toLowerCase().replace(/\s+/g, '-').replace(/[^\w-]/g, '');
-      studios.push({ name, slug, url: `https://hentaimama.io/studio/${slug}/` });
+    if (name && href.includes('/studio/')) {
+      const slug = href.replace('https://hentaimama.io/studio/', '').replace(/\/$/, '');
+      if (slug && !studios.find(s => s.slug === slug)) {
+        studios.push({ name, slug, url: href });
+      }
     }
   });
   
