@@ -3,7 +3,7 @@ import Link from "next/link";
 async function getGenres() {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/genres`, {
-      next: { revalidate: 3600 } // Cache for 1 hour
+      next: { revalidate: 0 } // Disable cache for development
     });
     if (!res.ok) return null;
     return res.json();

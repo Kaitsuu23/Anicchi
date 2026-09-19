@@ -11,7 +11,7 @@ async function getTopRated(tab: string, page: number) {
   try {
     // Assuming Express backend is running on 3000 locally
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/toprated?tab=${tab}&page=${page}`, {
-      next: { revalidate: 300 } // cache for 5 minutes
+      next: { revalidate: 0 }
     });
     if (!res.ok) return null;
     return res.json();
@@ -24,7 +24,7 @@ async function getTopRated(tab: string, page: number) {
 async function getHomeRecentlyAdded() {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/home`, {
-      next: { revalidate: 300 }
+      next: { revalidate: 0 }
     });
     if (!res.ok) return null;
     const json = await res.json();

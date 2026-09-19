@@ -11,7 +11,7 @@ const validFilters = ['recent', 'rating', 'alphabet', 'weekly', 'monthly', 'allt
 async function getSeriesList(page: number, filter: string) {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/list?page=${page}&filter=${filter}`, {
-      next: { revalidate: 300 }
+      next: { revalidate: 0 }
     });
     if (!res.ok) return null;
     return res.json();

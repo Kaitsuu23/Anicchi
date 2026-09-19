@@ -9,7 +9,7 @@ interface PageProps {
 async function getRecentEpisodes(page: number) {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/recent-episodes?page=${page}`, {
-      next: { revalidate: 300 }
+      next: { revalidate: 0 }
     });
     if (!res.ok) return null;
     return res.json();
