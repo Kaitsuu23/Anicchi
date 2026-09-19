@@ -7,7 +7,7 @@ export const metadata = {
 async function getHentaiList() {
   try {
     const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL || 'http://localhost:3000'}/api/hentai-list`, {
-      next: { revalidate: 0 }
+      next: { revalidate: 60 }
     });
     if (!res.ok) return null;
     return res.json();
