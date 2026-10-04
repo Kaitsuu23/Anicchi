@@ -17,7 +17,7 @@ export function Navbar() {
           <div className="flex items-center">
             <Link href="/" className="flex items-center gap-2">
               <FilmStrip size={28} weight="fill" className="text-zinc-100" />
-              <span className="font-bold tracking-tight text-zinc-100 text-lg">EcchiZone</span>
+              <span className="font-bold tracking-tight text-zinc-100 text-lg">Anicchi</span>
             </Link>
           </div>
           

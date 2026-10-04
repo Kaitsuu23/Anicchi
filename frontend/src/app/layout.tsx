@@ -9,10 +9,10 @@ const inter = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "EcchiZone",
+  title: "Anicchi",
   description: "Premium anime streaming",
   appleWebApp: {
-    title: "EcchiZone",
+    title: "Anicchi",
     capable: true,
     statusBarStyle: "black-translucent",
   },

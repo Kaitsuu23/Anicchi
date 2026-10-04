@@ -9,7 +9,7 @@ const https = require('https');
 function fetchGenresAndStudios() {
   return new Promise((resolve, reject) => {
     const options = {
-      hostname: 'ecchizone-api.vercel.app',
+      hostname: 'ancchi-api.vercel.app',
       path: '/api/genres',
       method: 'GET',
     };

@@ -1,4 +1,4 @@
-# EcchiZone
+# Anicchi
 
 Backend-only scraper API for hentaimama.io. Scrapes and provides data for hentai series, episodes, genres, studios, and release years.
 
@@ -36,7 +36,7 @@ Server runs at `http://localhost:3000`
 ## Project Structure
 
 ```
-EcchiZone/
+Anicchi/
 ├── backend/
 │   ├── server.js
 │   ├── scraper.js

@@ -22,7 +22,7 @@ app.use(express.json());
 app.get('/', (req, res) => {
   res.json({
     success: true,
-    api: 'EcchiZone API',
+    api: 'Anicchi API',
     version: '1.0.0',
     status: 'Running',
     endpoints: {
@@ -39,7 +39,7 @@ app.get('/', (req, res) => {
       releases: '/api/releases/:year',
       video: '/api/video'
     },
-    documentation: 'https://github.com/Kaitsuu23/EcchiZone'
+    documentation: 'https://github.com/Kaitsuu23/Anicchi'
   });
 });
 
