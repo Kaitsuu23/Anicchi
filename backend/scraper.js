@@ -163,6 +163,8 @@ function parseArticles($, container) {
     const finalLink = seasonLink || link;
 
     if (title && finalLink) {
+      // Filter out ads — only allow hentaimama.io links
+      if (!finalLink.includes('hentaimama.io')) return;
       videos.push({ title, episodeTitle: title, link: finalLink, thumbnail, badge, rating, date, epBadge });
     }
   });
@@ -180,6 +182,8 @@ function parsePopItems($, container) {
     const badge = $el.find('[class*="tag-sub"]').text().trim() || $el.find('[class*="tag-unc"]').text().trim() || '';
     const rating = $el.find('[class*="rating"], [class*="score"]').text().replace(/[^\d.]/g, '').trim() || '';
     if (title && link) {
+      // Filter out ads
+      if (!link.includes('hentaimama.io')) return;
       videos.push({ title, episodeTitle: title, link, thumbnail, badge, rating, date, epBadge: '' });
     }
   });
@@ -325,6 +329,7 @@ async function scrapeList(url) {
     const epBadge = $el.find('.dt-ep-badge').text().trim() || '';
 
     if (title && link) {
+      if (!link.includes('hentaimama.io')) return;
       videos.push({ 
         title, 
         link, 
@@ -398,7 +403,10 @@ async function scrapeSearch(query, page = 1) {
     const rating = $el.find('.sc-btn-rating').text().trim() || 
                    $el.find('.rating').text().replace('Rating:', '').trim();
 
-    if (title && link) videos.push({ title, link, thumbnail, year, rating });
+    if (title && link) {
+      if (!link.includes('hentaimama.io')) return;
+      videos.push({ title, link, thumbnail, year, rating });
+    }
   });
 
   // Extract last page

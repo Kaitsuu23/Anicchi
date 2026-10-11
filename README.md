@@ -1,35 +1,15 @@
 # Anicchi
 
-Backend-only scraper API for hentaimama.io. Scrapes and provides data for hentai series, episodes, genres, studios, and release years.
+Full-stack hentai streaming app — scraper API, web frontend, and Android mobile app for hentaimama.io.
 
 ## Stack
 
-- Backend: Node.js + Express
-- Scraping: Cheerio + Axios
-- Deployment: Standalone Node.js server
-
----
-
-## Local Development
-
-### 1. Install dependencies
-```bash
-cd backend
-npm install
-```
-
-### 2. Setup environment variable (optional)
-```bash
-# backend/.env
-CF_WORKER_URL=https://your-worker.workers.dev
-```
-
-### 3. Run backend
-```bash
-cd backend
-npm start
-```
-Server runs at `http://localhost:3000`
+| Layer | Tech |
+|-------|------|
+| Backend (API) | Node.js + Express + Cheerio + Axios |
+| Frontend (Web) | Next.js 16 + React 19 + Tailwind CSS + shadcn/ui |
+| Mobile (Android) | Flutter + Dart |
+| Proxy | Cloudflare Workers |
 
 ---
 
@@ -37,7 +17,7 @@ Server runs at `http://localhost:3000`
 
 ```
 Anicchi/
-├── backend/
+├── backend/                    # Scraper API (Node.js)
 │   ├── server.js
 │   ├── scraper.js
 │   ├── services/
@@ -46,9 +26,112 @@ Anicchi/
 │   │   └── scraperController.js
 │   ├── routes/
 │   │   └── scraperRoutes.js
+│   ├── .env
 │   └── package.json
+│
+├── cloudflare-worker/          # CF Worker proxy
+│   └── worker.js
+│
+├── frontend/                   # Web app (Next.js)
+│   ├── src/
+│   │   ├── app/                # App router pages
+│   │   ├── components/         # UI components
+│   │   └── lib/                # Utilities & API client
+│   ├── next.config.ts
+│   └── package.json
+│
+├── ecchizone_app/              # Mobile app (Flutter/Android)
+│   ├── lib/
+│   │   ├── core/               # Services, theme, constants
+│   │   ├── screens/            # App screens
+│   │   └── widgets/            # Reusable widgets
+│   ├── android/
+│   └── pubspec.yaml
+│
 └── README.md
 ```
+
+---
+
+## Setup & Running
+
+### 1. Cloudflare Worker (required first)
+
+Deploy the worker proxy to bypass CORS & hotlink protection:
+
+```bash
+cd cloudflare-worker
+# Upload worker.js via Cloudflare Dashboard or wrangler
+wrangler deploy
+```
+
+Copy the worker URL (e.g. `https://your-worker.workers.dev`).
+
+---
+
+### 2. Backend API
+
+```bash
+cd backend
+npm install
+```
+
+Create `.env`:
+```env
+CF_WORKER_URL=https://your-worker.workers.dev
+PORT=3000
+```
+
+Run:
+```bash
+npm start
+```
+
+API runs at `http://localhost:3000`
+
+---
+
+### 3. Frontend (Web)
+
+```bash
+cd frontend
+npm install
+npm run dev
+```
+
+Web app runs at `http://localhost:3000`
+
+> Set your API base URL in `src/lib/` to point to the backend.
+
+---
+
+### 4. Mobile App (Flutter)
+
+Requirements: Flutter SDK ≥ 3.5.0, Android SDK
+
+```bash
+cd ecchizone_app
+flutter pub get
+flutter run           # development
+flutter build apk --release   # production APK
+```
+
+APK output: `build/app/outputs/flutter-apk/app-release.apk`
+
+---
+
+## Mobile App Features
+
+- Browse home, series, genres, studios, monthly releases
+- Episode streaming with HLS & MP4 support
+- Custom video player (brightness, volume, seek gestures)
+- Fullscreen landscape mode
+- Continue Watching (local history)
+- Favorites with selection mode
+- Watch History screen
+- Backup & Restore (export/import JSON)
+- Search
+- Navigation bar hidden, status bar visible
 
 ---
 
@@ -56,163 +139,74 @@ Anicchi/
 
 | Method | Endpoint | Description |
 |--------|----------|-------------|
-| GET | `/api/list` | Hentai series list (default: A-Z) |
+| GET | `/api/home` | Homepage sections |
+| GET | `/api/list` | Series list (default: A-Z) |
 | GET | `/api/list?filter=recent` | Sort by recent |
 | GET | `/api/list?filter=rating` | Sort by rating |
 | GET | `/api/list?filter=alphabet` | Sort A-Z |
-| GET | `/api/list?filter=weekly` | Sort by weekly views |
-| GET | `/api/list?filter=monthly` | Sort by monthly views |
-| GET | `/api/list?filter=alltime` | Sort by all-time views |
+| GET | `/api/list?filter=weekly` | Sort by weekly |
+| GET | `/api/list?filter=monthly` | Sort by monthly |
+| GET | `/api/list?filter=alltime` | Sort by all-time |
 | GET | `/api/list?page=2` | Pagination |
-| GET | `/api/genres` | All genres, studios, and release years |
-| GET | `/api/genre/:slug` | Series by genre (default: alltime) |
-| GET | `/api/genre/:slug?filter=rating` | Genre list sorted by rating |
-| GET | `/api/genre/:slug?page=2` | Genre list with pagination |
-| GET | `/api/studio/:slug` | Series by studio (default: alltime) |
-| GET | `/api/studio/:slug?filter=recent` | Studio list sorted by recent |
-| GET | `/api/studio/:slug?page=2` | Studio list with pagination |
-| GET | `/api/release/:year` | Series by release year (default: alltime) |
-| GET | `/api/release/:year?filter=monthly` | Release list sorted by monthly |
-| GET | `/api/release/:year?page=2` | Release list with pagination |
-| GET | `/api/episode?url=` | Episode data with player sources |
-| GET | `/api/detail?url=` | Series detail with episode list |
-| GET | `/api/home` | Homepage sections |
-| GET | `/api/monthly` | New monthly hentai |
-| GET | `/api/monthly?page=2` | New monthly hentai with pagination |
-| GET | `/api/search?q=` | Search results |
+| GET | `/api/genres` | All genres, studios, years |
+| GET | `/api/genre/:slug` | Series by genre |
+| GET | `/api/genre/:slug?filter=rating&page=2` | Genre with filter + pagination |
+| GET | `/api/studio/:slug` | Series by studio |
+| GET | `/api/studio/:slug?filter=recent&page=2` | Studio with filter + pagination |
+| GET | `/api/release/:year` | Series by release year |
+| GET | `/api/release/:year?filter=monthly&page=2` | Release with filter + pagination |
+| GET | `/api/episode?url=` | Episode data + player sources |
+| GET | `/api/detail?url=` | Series detail + episode list |
+| GET | `/api/monthly?page=1` | New monthly hentai |
+| GET | `/api/search?q=` | Search |
 | GET | `/api/toprated?tab=monthly` | Top rated (monthly/3d/uncensored) |
-| GET | `/proxy` | Proxy endpoint for bypassing CSP |
-
----
-
-## Response Examples
-
-### `/api/list`
-```json
-{
-  "success": true,
-  "data": {
-    "videos": [
-      {
-        "title": "3D – Assorted Collection",
-        "link": "https://hentaimama.io/tvshows/3d-assorted-collection/",
-        "thumbnail": "https://hentaimama.io/wp-content/uploads/...",
-        "rating": "7.7",
-        "studios": ["Studio1", "Studio2"],
-        "genres": ["3D", "Big Tits"],
-        "date": "Aug 28, 2026"
-      }
-    ],
-    "pagination": {
-      "currentPage": 1,
-      "lastPage": 56,
-      "basePageUrl": "https://hentaimama.io/hentai-series/page/",
-      "pages": [1, 2, 3, 4, 5]
-    }
-  }
-}
-```
-
-### `/api/genres`
-```json
-{
-  "success": true,
-  "data": {
-    "genres": [
-      { "name": "3D", "url": "https://hentaimama.io/genre/3d/" },
-      { "name": "Ahegao", "url": "https://hentaimama.io/genre/ahegao/" }
-    ],
-    "studios": [
-      { "name": "Active", "url": "https://hentaimama.io/studio/active/" }
-    ],
-    "years": [
-      { "name": "2026", "url": "https://hentaimama.io/release/2026/" }
-    ]
-  }
-}
-```
-
-### `/api/episode`
-```json
-{
-  "success": true,
-  "data": {
-    "title": "Kanojo Saimin - Episode 1",
-    "genres": ["3D", "Big Tits"],
-    "screenshots": ["https://hentaimama.io/wp-content/uploads/..."],
-    "episodes": [
-      {
-        "epNum": "1",
-        "link": "https://hentaimama.io/episodes/kanojo-saimin-episode-1/",
-        "thumb": "https://hentaimama.io/wp-content/uploads/...",
-        "date": "Aug 28, 2026"
-      },
-      {
-        "epNum": "2",
-        "link": "https://hentaimama.io/episodes/kanojo-saimin-episode-2/",
-        "thumb": "https://hentaimama.io/wp-content/uploads/...",
-        "date": "Aug 28, 2026"
-      }
-    ],
-    "prevEp": "",
-    "nextEp": "https://hentaimama.io/episodes/kanojo-saimin-episode-2/",
-    "seriesLink": "https://hentaimama.io/tvshows/kanojo-saimin/",
-    "thumbnail": "https://hentaimama.io/wp-content/uploads/...",
-    "seriesCover": "https://hentaimama.io/wp-content/uploads/...",
-    "playerSrcs": [
-      {
-        "option": 1,
-        "src": "https://gdvid.info/K/kanojo-saimin-1.mp4",
-        "proxySrc": "/api/video?url=https%3A%2F%2Fgdvid.info%2FK%2Fkanojo-saimin-1.mp4",
-        "type": "mp4"
-      },
-      {
-        "option": 2,
-        "src": "https://hentaidoge.org/s/.../master.m3u8",
-        "proxySrc": "/api/video?url=https%3A%2F%2Fhentaidoge.org%2Fs%2F...%2Fmaster.m3u8",
-        "type": "hls"
-      }
-    ],
-    "rating": "8.1",
-    "studio": "Bunnywalker",
-    "airedOn": "Aug 2026",
-    "similarTitles": [
-      {
-        "title": "Similar Title",
-        "link": "https://hentaimama.io/tvshows/similar-title/",
-        "thumbnail": "https://hentaimama.io/wp-content/uploads/...",
-        "rating": "7.5"
-      }
-    ],
-    "postId": "16989"
-  }
-}
-```
+| GET | `/api/hentai-list` | Full A-Z title list |
+| GET | `/api/recent-episodes?page=1` | Recent episodes |
+| GET | `/api/image?url=` | Image proxy (bypass hotlink) |
+| GET | `/api/video?url=` | Video proxy (HLS/MP4) |
 
 ---
 
 ## Filter Options
 
-Available filters for `/api/list`, `/api/genre/:slug`, `/api/studio/:slug`, and `/api/release/:year`:
+Available for `/api/list`, `/api/genre/:slug`, `/api/studio/:slug`, `/api/release/:year`:
 
-- `recent` - Sort by recent
-- `rating` - Sort by rating
-- `alphabet` - Sort A-Z
-- `weekly` - Sort by weekly views
-- `monthly` - Sort by monthly views
-- `alltime` - Sort by all-time views (default for detail pages)
+| Value | Description |
+|-------|-------------|
+| `recent` | Sort by recently added |
+| `rating` | Sort by rating |
+| `alphabet` | Sort A-Z (default for list) |
+| `weekly` | Sort by weekly views |
+| `monthly` | Sort by monthly views |
+| `alltime` | Sort by all-time views |
 
 ---
 
 ## Caching
 
-- Episode data: 30 minutes
-- Genres/Studios/Years: 1 hour
-- List data: 10 minutes
-- Detail pages: 30 minutes
+| Data | TTL |
+|------|-----|
+| Home | 10 minutes |
+| Episode | 30 minutes |
+| Detail | 30 minutes |
+| Genres/Studios/Years | 1 hour |
+| List/Genre/Studio | 10 minutes |
 
 ---
 
-## Proxy Endpoint
+## Flutter Dependencies
 
-The `/proxy` endpoint can be used to bypass CSP (Content Security Policy) restrictions when embedding content from hentaimama.io.
+| Package | Purpose |
+|---------|---------|
+| `go_router` | Navigation |
+| `provider` | State management |
+| `video_player` + `chewie` | Video playback |
+| `cached_network_image` | Image caching |
+| `shared_preferences` | Local storage (history, favorites) |
+| `file_picker` | Import backup JSON |
+| `path_provider` | File system access |
+| `screen_brightness` | Player brightness gesture |
+| `volume_controller` | Player volume gesture |
+| `wakelock_plus` | Keep screen on while playing |
+| `shimmer` | Loading skeleton |
+| `visibility_detector` | Detect screen visibility |
