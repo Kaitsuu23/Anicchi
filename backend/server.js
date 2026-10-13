@@ -8,6 +8,9 @@ const scraperRoutes = require('./routes/scraperRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Pretty-print JSON responses
+app.set('json spaces', 2);
+
 const scraperLimiter = rateLimit({
   windowMs: 60 * 1000,
   max: 60,

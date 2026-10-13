@@ -67,7 +67,7 @@ async function fetchPageRaw(url) {
     });
     if (res.data) return res.data;
   } catch (err) {
-    console.warn(`[Scraper] Worker fail: ${err.message}`);
+    // Silently fallback to direct request
   }
 
   // Try 2: Direct HTTP with DNS Fallback (Secondary)
@@ -217,8 +217,8 @@ async function scrapeHome() {
       const url = tabLinks[key];
       if (!url) { console.warn(`[scrapeHome] No URL for tab: ${key}`); return; }
       try {
-        const tabRes = await axios.get(`${WORKER_URL}?url=${encodeURIComponent(url.replace('https://', 'http://'))}`, { timeout: 10000, httpsAgent: agent });
-        const $t = cheerio.load(tabRes.data);
+        const html = await fetchPageRaw(url);
+        const $t = cheerio.load(html);
         const tabContainer = $t('.items, [class*="items"], #archive-content').first();
         const tabVideos = parseArticles($t, tabContainer.length && tabContainer.find('article').length ? tabContainer : $t('body'));
         console.log(`[scrapeHome] tab ${key}: found ${tabVideos.length} videos`);
