@@ -190,6 +190,18 @@ function parsePopItems($, container) {
   return videos;
 }
 
+/**
+ * Extract quality label dari URL video
+ * Contoh: "1080p", "720p", "480p", "360p", "HLS", "MP4"
+ */
+function extractQuality(url, type) {
+  if (!url) return '';
+  const m = url.match(/(\d{3,4}p)/i);
+  if (m) return m[1].toLowerCase(); // "1080p", "720p", dll
+  if (type === 'hls') return 'HLS';
+  return '';
+}
+
 async function scrapeHome() {
   const $ = await fetchPage(BASE_URL);
   const sections = [];
@@ -698,7 +710,8 @@ async function scrapeEpisode(url) {
                       option: idx + 1,
                       src: hlsUrl,
                       proxySrc: `/api/video?url=${encodeURIComponent(hlsUrl)}`,
-                      type: 'hls'
+                      type: 'hls',
+                      quality: extractQuality(hlsUrl, 'hls')
                     });
                     addedMp4 = true;
                   }
@@ -713,7 +726,8 @@ async function scrapeEpisode(url) {
                         option: idx + 1,
                         src: mp4Url,
                         proxySrc: `/api/video?url=${encodeURIComponent(mp4Url)}`,
-                        type: 'mp4'
+                        type: 'mp4',
+                        quality: extractQuality(mp4Url, 'mp4')
                       });
                       addedMp4 = true;
                     }
@@ -762,7 +776,8 @@ async function scrapeEpisode(url) {
                       option: idx + 1,
                       src: videoUrl,
                       proxySrc: `/api/video?url=${encodeURIComponent(videoUrl)}`,
-                      type: videoType
+                      type: videoType,
+                      quality: extractQuality(videoUrl, videoType)
                     });
                     addedMp4 = true;
                   } else {
@@ -849,7 +864,7 @@ async function scrapeEpisode(url) {
         })();
 
         if (fastResult) {
-          playerSrcs = [{ option: 1, src: fastResult.src, proxySrc: `/api/video?url=${encodeURIComponent(fastResult.src)}`, type: 'mp4' }];
+          playerSrcs = [{ option: 1, src: fastResult.src, proxySrc: `/api/video?url=${encodeURIComponent(fastResult.src)}`, type: 'mp4', quality: extractQuality(fastResult.src, 'mp4') }];
           break outer;
         }
 
@@ -887,7 +902,8 @@ async function scrapeEpisode(url) {
               option: 1,
               src: found[0].src,
               proxySrc: `/api/video?url=${encodeURIComponent(found[0].src)}`,
-              type: 'mp4'
+              type: 'mp4',
+              quality: extractQuality(found[0].src, 'mp4')
             }];
             break outer;
           }
