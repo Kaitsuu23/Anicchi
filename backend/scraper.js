@@ -898,7 +898,14 @@ async function scrapeEpisode(url) {
 
   }
 
-  return { title, seriesLink, seriesCover, thumbnail, genres, playerSrcs, screenshots, episodes, prevEp, nextEp, similarTitles, postId, rating, studio, airedOn };
+  // Deteksi "Coming Soon" dari HTML
+  const isComingSoon =
+    html.includes('Coming soon') ||
+    html.includes('coming-soon') ||
+    html.includes('Coming Soon') ||
+    $('body').text().includes('Coming soon');
+
+  return { title, seriesLink, seriesCover, thumbnail, genres, playerSrcs, screenshots, episodes, prevEp, nextEp, similarTitles, postId, rating, studio, airedOn, comingSoon: isComingSoon };
 }
 
 async function scrapeDetail(url) {
