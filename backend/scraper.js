@@ -898,12 +898,14 @@ async function scrapeEpisode(url) {
 
   }
 
-  // Deteksi "Coming Soon" dari HTML
-  const isComingSoon =
-    html.includes('Coming soon') ||
-    html.includes('coming-soon') ||
-    html.includes('Coming Soon') ||
-    $('body').text().includes('Coming soon');
+  // Deteksi "Coming Soon" — hanya kalau playerSrcs kosong DAN ada marker spesifik di player area
+  const playerAreaHtml = $('body').find('.mian-item-player, #dt-player, .player-embed, [class*="player"]').first().html() || '';
+  const playerAreaText = $('body').find('.mian-item-player, #dt-player, .player-embed, [class*="player"]').first().text().trim();
+  const isComingSoon = playerSrcs.length === 0 && (
+    /coming\s*soon/i.test(playerAreaText) ||
+    /coming\s*soon/i.test(playerAreaHtml) ||
+    $('body').find('[class*="coming-soon"], .coming-soon').length > 0
+  );
 
   return { title, seriesLink, seriesCover, thumbnail, genres, playerSrcs, screenshots, episodes, prevEp, nextEp, similarTitles, postId, rating, studio, airedOn, comingSoon: isComingSoon };
 }
