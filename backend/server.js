@@ -162,6 +162,29 @@ app.get('/api/video', async (req, res) => {
     // Set HTTP status code matching the target server (e.g., 200 or 206)
     res.status(response.status);
 
+    // Kalau HLS m3u8 — rewrite semua URL segment supaya lewat proxy juga
+    if (contentType && (contentType.includes('mpegurl') || contentType.includes('x-mpegURL') || decodedUrl.includes('.m3u8'))) {
+      let m3u8Text = '';
+      response.data.on('data', chunk => { m3u8Text += chunk.toString(); });
+      response.data.on('end', () => {
+        // Base URL dari m3u8
+        const baseUrl = decodedUrl.substring(0, decodedUrl.lastIndexOf('/') + 1);
+        const proxyBase = `${req.protocol}://${req.get('host')}/api/video?url=`;
+
+        // Rewrite setiap baris yang bukan comment dan bukan kosong
+        const rewritten = m3u8Text.split('\n').map(line => {
+          const trimmed = line.trim();
+          if (!trimmed || trimmed.startsWith('#')) return line;
+          // Kalau relative URL, jadikan absolute dulu
+          const absUrl = trimmed.startsWith('http') ? trimmed : baseUrl + trimmed;
+          return proxyBase + encodeURIComponent(absUrl);
+        }).join('\n');
+
+        res.send(rewritten);
+      });
+      return;
+    }
+
     // Pipe the stream directly
     response.data.pipe(res);
     
@@ -185,7 +208,8 @@ app.get('/api/video', async (req, res) => {
   }
 });
 
-if (process.env.NODE_ENV !== 'production' && !process.env.VERCEL) {
+// Listen selalu — kecuali di Vercel serverless
+if (!process.env.VERCEL) {
   app.listen(PORT, () => {
     console.log(`Server berjalan di http://localhost:${PORT}`);
   });
