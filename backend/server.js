@@ -8,6 +8,9 @@ const scraperRoutes = require('./routes/scraperRoutes');
 const app = express();
 const PORT = process.env.PORT || 3000;
 
+// Trust proxy — diperlukan karena ada di belakang Cloudflare Tunnel
+app.set('trust proxy', 1);
+
 // Pretty-print JSON responses
 app.set('json spaces', 2);
 
