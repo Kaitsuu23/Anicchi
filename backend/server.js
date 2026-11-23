@@ -2,7 +2,6 @@ require('events').EventEmitter.defaultMaxListeners = 100;
 require('dotenv').config();
 const express = require('express');
 const cors = require('cors');
-const rateLimit = require('express-rate-limit');
 const scraperRoutes = require('./routes/scraperRoutes');
 
 const app = express();
@@ -13,13 +12,6 @@ app.set('trust proxy', 1);
 
 // Pretty-print JSON responses
 app.set('json spaces', 2);
-
-const scraperLimiter = rateLimit({
-  windowMs: 60 * 1000,
-  max: 60,
-  message: { success: false, message: 'Terlalu banyak request. Coba lagi dalam 1 menit.' },
-  skip: (req) => req.path === '/genres',
-});
 
 app.use(cors());
 app.use(express.json());
@@ -50,7 +42,6 @@ app.get('/', (req, res) => {
 });
 
 // API routes
-app.use('/api', scraperLimiter);
 app.use('/api', scraperRoutes);
 
 // Proxy endpoint untuk bypass frame-ancestors CSP
